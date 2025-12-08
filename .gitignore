@@ -1,0 +1,20 @@
+# ======================
+# Backend (ASP.NET Core)
+# ======================
+**/.vs
+**/bin
+**/obj
+**/*.user
+**/Logs/*
+**/temp
+
+# ======================
+# Frontend (Angular)
+# ======================
+**/node_modules
+**/dist
+**/.angular
+**/.vscode
+**/*.log
+**/environment.ts
+**/environment.prod.ts

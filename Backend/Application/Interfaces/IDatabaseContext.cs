@@ -1,8 +1,8 @@
 ﻿using Domain.Entities;
 
-namespace Domain.Interfaces;
+namespace Application.Interfaces;
 
-public interface IDatabaseContext
+public interface IDatabaseContext 
 {
     Task<List<T>> GetAllAsync<T>() where T : BaseEntity;
     Task<bool> AddAsync<T>(T entity) where T : BaseEntity;

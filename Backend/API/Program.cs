@@ -1,6 +1,8 @@
 using Serilog;
-using Domain.Interfaces;
 using Infrastructure.Persistence;
+using Application.Interfaces;
+using Infrastructure.Services;
+using Infrastructure.ConfigurationHelper;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,6 +20,7 @@ builder.Host.UseSerilog();
 builder.Services.AddControllers();
 builder.Services.Configure<DBSettings>(builder.Configuration.GetSection("DBSettings"));
 builder.Services.AddSingleton<IDatabaseContext, DatabaseContext>();
+builder.Services.AddSingleton<IAuthService, AuthService>();
 
 var app = builder.Build();
 

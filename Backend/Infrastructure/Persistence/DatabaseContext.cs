@@ -1,26 +1,111 @@
-﻿using Domain.Interfaces;
+﻿using Domain.Entities;
+using Domain.Interfaces;
+using Microsoft.Extensions.Logging;
+using MongoDB.Driver;
 
 namespace Infrastructure.Persistence;
 
 public class DatabaseContext : IDatabaseContext
 {
-    public Task<List<T>> GetAllAsync<T>()
+    private readonly ILogger<DatabaseContext> _logger;
+    public DatabaseContext(ILogger<DatabaseContext> logger)
     {
-        throw new NotImplementedException();
+        _logger = logger;
     }
 
-    public Task<bool> AddAsync<T>(T entity)
+    public async Task<List<T>> GetAllAsync<T>() where T : BaseEntity
     {
-        throw new NotImplementedException();
+        try {
+            var collection = DatabaseContextClient.GetCollection<T>();
+            var response = await collection.Find(_ => true).ToListAsync();
+            _logger.LogInformation($"Retrieved all entities of type {typeof(T).FullName}, count: {response.Count}");
+            return response;
+        }
+        catch
+        {
+            _logger.LogError($"GetAllAsync failed for type {typeof(T).FullName}");
+            return null;
+        }
     }
 
-    public Task<bool> UpdateAsync<T>(T entity)
+    public async Task<bool> AddAsync<T>(T entity) where T : BaseEntity
     {
-        throw new NotImplementedException();
+        try
+        {
+            var collection = DatabaseContextClient.GetCollection<T>();
+            await collection.InsertOneAsync(entity);
+            _logger.LogInformation($"Added entity of type {typeof(T).FullName} with Id {entity.Id}");
+            return true;
+        }
+        catch
+        {
+            _logger.LogError($"AddAsync failed for type {typeof(T).FullName} with Id {entity.Id}");
+            return false;
+        }
     }
 
-    public Task<bool> DeleteAsync<T>(T entity)
+    public async Task<bool> UpdateAsync<T>(T entity) where T : BaseEntity
     {
-        throw new NotImplementedException();
+        try
+        {
+            var collection = DatabaseContextClient.GetCollection<T>();
+            var result = await collection.ReplaceOneAsync(o => o.Id.Equals(entity.Id), entity);
+            var success = result.IsAcknowledged && result.ModifiedCount > 0;
+            if (success)
+            {
+                _logger.LogInformation($"Updated entity of type {typeof(T).FullName} with Id {entity.Id}");
+            }
+            else
+            {
+                _logger.LogWarning($"UpdateAsync did not modify any document for type {typeof(T).FullName} with Id {entity.Id}");
+            }
+
+            return success;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError($"UpdateAsync failed for type {typeof(T).FullName} with Id {entity.Id}");
+            return false;
+        }
+    }
+
+    public async Task<bool> DeleteAsync<T>(T entity) where T : BaseEntity
+    {
+        try
+        {
+            var collection = DatabaseContextClient.GetCollection<T>();
+            await collection.DeleteOneAsync(o => o.Id.Equals(entity.Id));
+            _logger.LogInformation($"Deleted entity of type {typeof(T).FullName} with Id {entity.Id}");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError($"DeleteAsync failed for type {typeof(T).FullName} with Id {entity.Id}");
+            return false;
+        }
+    }
+
+    public async Task<bool> SoftDeleteAsync<T>(T entity) where T : BaseEntity
+    {
+        try
+        {
+            var collection = DatabaseContextClient.GetCollection<T>();
+            entity.IsDeleted = true;
+            var response = await UpdateAsync<T>(entity);
+            if (response)
+            {
+                _logger.LogInformation($"Soft deleted entity of type {typeof(T).FullName} with Id {entity.Id}");
+            }
+            else
+            {
+                _logger.LogWarning($"SoftDeleteAsync did not modify any document for type {typeof(T).FullName} with Id {entity.Id}");
+            }
+            return response;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError($"SoftDeleteAsync failed for type {typeof(T).FullName} with Id {entity.Id}");
+            return false;
+        }
     }
 }

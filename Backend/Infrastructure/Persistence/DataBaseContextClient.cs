@@ -4,11 +4,11 @@ using MongoDB.Driver;
 
 namespace Infrastructure.Persistence;
 
-public class DataBaseContextClient
+public class DatabaseContextClient
 {
     private static string ConnectionString = "ConnectionString";
     private static string DatabaseName = "DatabaseName";
-    public DataBaseContextClient(IOptions<DBSettings> settings)
+    public DatabaseContextClient(IOptions<DBSettings> settings)
     {
         ConnectionString = settings.Value.ConnectionString;
         DatabaseName = settings.Value.DatabaseName;

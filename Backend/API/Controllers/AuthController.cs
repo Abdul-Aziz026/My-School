@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Application.DTOs;
+using Application.Interfaces;
+using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers;
 
@@ -7,16 +9,27 @@ namespace API.Controllers;
 [Route("api/[controller]")]
 public class AuthController : Controller
 {
-    [HttpPost("register")]
-    public IActionResult Register()
+    private readonly IAuthService _authService;
+    public AuthController(IAuthService authService)
     {
-        return Ok("register");
+        _authService = authService;
+    }
+    [HttpGet("register")]
+    //[HttpPost("register")]
+    public Task<string> Register(RegisterDto user)
+    {
+        return _authService.RegisterAsync(user);
     }
 
     [HttpPost("login")]
-    public IActionResult Login()
+    public IActionResult Login(LoginDto user)
     {
-        return Ok("login");
+        var response = _authService.LoginAsync(user);
+        if (response is null)
+        {
+            return BadRequest("Email or Password not mached...");
+        }
+        return Ok(response);
     }
     [HttpPost("refresh")]
     public IActionResult Refresh()

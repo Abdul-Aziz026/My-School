@@ -1,8 +1,9 @@
-using Serilog;
-using Infrastructure.Persistence;
+using API.MiddleWare;
 using Application.Interfaces;
+using Infrastructure.Configuration;
+using Infrastructure.Persistence;
 using Infrastructure.Services;
-using Infrastructure.ConfigurationHelper;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,11 +19,20 @@ builder.Host.UseSerilog();
 
 // Add services to the container.
 builder.Services.AddControllers();
-builder.Services.Configure<DBSettings>(builder.Configuration.GetSection("DBSettings"));
 builder.Services.AddSingleton<IDatabaseContext, DatabaseContext>();
 builder.Services.AddSingleton<IAuthService, AuthService>();
 
+ConfigurationHelper.Initialize(builder.Configuration);
 var app = builder.Build();
+
+// Custom middlewate
+app.UseWhen(
+    context => context.Request.Query.ContainsKey("Token"),
+    app =>
+    {
+        app.UseAuthMiddleware();
+    });
+
 
 app.UseHttpsRedirection();
 app.MapControllers();

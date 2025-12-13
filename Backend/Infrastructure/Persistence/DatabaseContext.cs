@@ -13,6 +13,12 @@ public class DatabaseContext : IDatabaseContext
         _logger = logger;
     }
 
+    public async Task<string> Hello<T>()
+    {
+        var collection = DatabaseContextClient.GetCollection<T>();
+        return "Alhamdulillah from DatabaseContext";
+    }
+
     public async Task<List<T>> GetAllAsync<T>() where T : BaseEntity
     {
         try {
@@ -24,7 +30,7 @@ public class DatabaseContext : IDatabaseContext
         catch
         {
             _logger.LogError($"GetAllAsync failed for type {typeof(T).FullName}");
-            return null;
+            return default!;
         }
     }
 
@@ -62,7 +68,7 @@ public class DatabaseContext : IDatabaseContext
 
             return success;
         }
-        catch (Exception ex)
+        catch
         {
             _logger.LogError($"UpdateAsync failed for type {typeof(T).FullName} with Id {entity.Id}");
             return false;
@@ -78,7 +84,7 @@ public class DatabaseContext : IDatabaseContext
             _logger.LogInformation($"Deleted entity of type {typeof(T).FullName} with Id {entity.Id}");
             return true;
         }
-        catch (Exception ex)
+        catch
         {
             _logger.LogError($"DeleteAsync failed for type {typeof(T).FullName} with Id {entity.Id}");
             return false;
@@ -102,10 +108,22 @@ public class DatabaseContext : IDatabaseContext
             }
             return response;
         }
-        catch (Exception ex)
+        catch
         {
             _logger.LogError($"SoftDeleteAsync failed for type {typeof(T).FullName} with Id {entity.Id}");
             return false;
         }
+    }
+
+    public async Task<User> GetByConditionAsync()
+    {
+        await Task.Delay(1000);
+        return new User()
+        {
+            Id = "1",
+            FullName = "Azizur Rahman",
+            Email = "admin@gmail.com",
+            Roles = { "admin", "employee"}
+        };
     }
 }

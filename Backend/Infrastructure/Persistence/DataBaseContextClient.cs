@@ -1,36 +1,19 @@
-﻿using System.Runtime.InteropServices.Marshalling;
-using Infrastructure.ConfigurationHelper;
-using Microsoft.Extensions.Options;
-using MongoDB.Driver;
+﻿using MongoDB.Driver;
+using Microsoft.Extensions.Configuration;
+using Infrastructure.Configuration;
+using System.Runtime.CompilerServices;
 
 namespace Infrastructure.Persistence;
 
 public class DatabaseContextClient
 {
-    private static string ConnectionString = "ConnectionString";
-    private static string DatabaseName = "DatabaseName";
-    public DatabaseContextClient(IOptions<DBSettings> settings)
-    {
-        ConnectionString = settings.Value.ConnectionString;
-        DatabaseName = settings.Value.DatabaseName;
-    }
-
-    //Retry + Timeout Config Version for production use
-    //private static IMongoClient GetMongoClient()
-    //{
-    //    var mongoUrl = new MongoUrl(ConnectionString);
-    //    var settings = MongoClientSettings.FromUrl(mongoUrl);
-
-    //    // Retry + Timeout Config
-    //    settings.RetryWrites = true;
-    //    settings.ConnectTimeout = TimeSpan.FromSeconds(5);
-    //    settings.ServerSelectionTimeout = TimeSpan.FromSeconds(10);
-
-    //    return new MongoClient(settings);
-    //}
+    private static string ConnectionString = "";
+    private static string DatabaseName = "";
+    private static bool Init = false;
 
     private static IMongoClient GetMongoClient()
     {
+        Initialize();
         return new MongoClient(ConnectionString);
     }
 
@@ -45,5 +28,12 @@ public class DatabaseContextClient
         var database = GetDataBase();
         collectionName = collectionName ?? typeof(T).Name.ToLower();
         return database.GetCollection<T>(collectionName.ToLower());
+    }
+
+    private static void Initialize()
+    {
+        if (Init) return;
+        ConnectionString = ConfigurationHelper.GetConfigurationValue("DBSettings:ConnectionString");
+        DatabaseName = ConfigurationHelper.GetConfigurationValue("DBSettings:DatabaseName");
     }
 }

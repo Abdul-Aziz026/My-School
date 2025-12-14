@@ -22,13 +22,18 @@ public class AuthController : Controller
     }
 
     [HttpPost("login")]
-    public IActionResult Login(LoginDto user)
+    public async Task<ActionResult<AuthResponse>> Login(LoginDto user)
     {
-        var response = _authService.LoginAsync(user);
+        var response = await _authService.LoginAsync(user);
         if (response is null)
         {
             return BadRequest("Email or Password not mached...");
         }
+        var result = new AuthResponse()
+        {
+            Email = user.Email,
+            Token = response,
+        };
         return Ok(response);
     }
     [HttpPost("refresh")]

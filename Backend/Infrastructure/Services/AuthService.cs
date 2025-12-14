@@ -1,10 +1,11 @@
-﻿
-using Application.DTOs;
+﻿using Application.DTOs;
 using Application.Interfaces;
 using Domain.Entities;
 using Infrastructure.Configuration;
+using Infrastructure.Extensions;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
+using System.Linq.Expressions;
 using System.Security.Claims;
 
 namespace Infrastructure.Services;
@@ -17,22 +18,54 @@ public class AuthService : IAuthService
         _databaseContext = databaseContext;
     }
 
-
-    public Task<string> RegisterAsync(RegisterDto user)
+    /// <summary>
+    /// Registers a new user
+    /// </summary>
+    /// <param name="registerUser">including user name, email, and password.</param>
+    /// <returns>A JWT token as a string if registration is successful; otherwise, null</returns>
+    public async Task<string> RegisterAsync(RegisterDto registerUser)
     {
-        return _databaseContext.Hello<string>();
+        Expression <Func<User, bool>> condition = u => u.Email == registerUser.Email;
+        var user = await _databaseContext.GetItemByConditionAsync<User>(condition);
+        if (user is not null)
+        {
+            return default;
+        }
+        // Hash the password with BCrypt
+        var passwordHash = BCrypt.Net.BCrypt.HashPassword(registerUser.Password);
+        var newUser = new User()
+        {
+            UserName = registerUser.UserName,
+            Email = registerUser.Email,
+            PasswordHash = passwordHash,
+        };
+        await _databaseContext.AddAsync<User>(newUser);
+        var token = await CreateJwtToken(newUser);
+        return token;
     }
 
-    public async Task<AuthResponse>? LoginAsync(LoginDto loginUser)
+    /// <summary>
+    /// User login method
+    /// </summary>
+    /// <param name="loginUser"></param>
+    /// <returns>A JWT token as a string if login is successful; otherwise, null</returns>
+    public async Task<string?> LoginAsync(LoginDto loginUser)
     {
-        User user = await _databaseContext.GetByConditionAsync();
+        Expression<Func<User, bool>> filter = o => true;
+        filter = filter.And(u => u.Email == loginUser.Email);
+        var user = await _databaseContext.GetItemByConditionAsync<User>(filter);
         if (user is null)
         {
             return default!;
         }
         // implement password match logic...
-        bool passWordMatch = true;
-        if (!passWordMatch)
+        if (user.Email != loginUser.Email)
+        {
+            return default;
+        }
+        // Verify password using BCrypt
+        var passwordMatches = BCrypt.Net.BCrypt.Verify(loginUser.Password, user.PasswordHash);
+        if (!passwordMatches)
         {
             return default!;
         }
@@ -40,7 +73,12 @@ public class AuthService : IAuthService
         return jwtToken;
     }
 
-    public async Task<AuthResponse> CreateJwtToken(User user)
+    /// <summary>
+    /// Generates a JSON Web Token (JWT) for the specified user.
+    /// </summary>
+    /// <param name="user">The user for whom the JWT will be created.</param>
+    /// <returns>A JWT Token</returns>
+    public async Task<string> CreateJwtToken(User user)
     {
         var expirationTime = DateTime.UtcNow.AddMinutes(Convert.ToDouble(ConfigurationHelper.GetConfigurationValue("Jwt:Expiration_Minutes")));
 
@@ -50,7 +88,7 @@ public class AuthService : IAuthService
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()), // JWT ID
             new Claim(JwtRegisteredClaimNames.Iat, DateTime.UtcNow.ToString()), // Issued At
             new Claim(ClaimTypes.NameIdentifier, user.Email),
-            new Claim(ClaimTypes.Name, user.FullName)
+            new Claim(ClaimTypes.Name, user.UserName)
         };
 
         claims.AddRange(user.Roles.Select(role => new Claim(ClaimTypes.Role, role)));
@@ -67,12 +105,6 @@ public class AuthService : IAuthService
         );
 
         var base64Token = new JwtSecurityTokenHandler().WriteToken(token);
-        var response = new AuthResponse
-        {
-            Email = user.Email,
-            Name = user.FullName,
-            Token = base64Token
-        };
-        return response;
+        return base64Token;
     }
 }

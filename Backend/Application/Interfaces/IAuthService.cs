@@ -6,7 +6,7 @@ namespace Application.Interfaces;
 
 public interface IAuthService
 {
-    Task<AuthResponse>? LoginAsync(LoginDto user);
+    Task<string?> LoginAsync(LoginDto user);
     Task<string> RegisterAsync(RegisterDto user);
-    Task<AuthResponse> CreateJwtToken(User user);
+    Task<string> CreateJwtToken(User user);
 }

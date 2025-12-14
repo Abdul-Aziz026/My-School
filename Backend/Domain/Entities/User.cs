@@ -2,12 +2,11 @@
 
 namespace Domain.Entities;
 
-public class User
+public class User : BaseEntity
 {
-    public string Id { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
-    public string? PasswordHash { get; set; } = string.Empty;
-    public string FullName { get; set; } = string.Empty;
+    public string PasswordHash { get; set; } = string.Empty;
+    public string UserName { get; set; } = string.Empty;
     public List<string> Roles { get; set; } = new();
     public bool IsActive { get; set; } = true;
     public string? RefreshToken { get; set; }

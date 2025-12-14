@@ -135,7 +135,7 @@ public class DatabaseContext : IDatabaseContext
         return response;
     }
 
-    public async Task<List<T>> GetItemsByConditionAsync<T>(Expression<Func<T, bool>> criteria)
+    public async Task<List<T>?> GetItemsByConditionAsync<T>(Expression<Func<T, bool>> criteria)
     {
         var collection = DatabaseContextClient.GetCollection<T>();
         var results = await collection

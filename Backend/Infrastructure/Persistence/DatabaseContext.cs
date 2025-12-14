@@ -116,26 +116,14 @@ public class DatabaseContext : IDatabaseContext
         }
     }
 
-    public async Task<User> GetByConditionAsyncs()
-    {
-        await Task.Delay(1000);
-        return new User()
-        {
-            Id = "1",
-            UserName = "Azizur Rahman",
-            Email = "admin@gmail.com",
-            Roles = { "admin", "employee"}
-        };
-    }
-
-    public async Task<T?> GetItemByConditionAsync<T>(Expression<Func<T, bool>> criteria)
+    public async Task<T?> GetItemByConditionAsync<T>(Expression<Func<T, bool>> criteria) where T : BaseEntity
     {
         var collection = DatabaseContextClient.GetCollection<T>();
         var response = await collection.Find(criteria).FirstOrDefaultAsync();
         return response;
     }
 
-    public async Task<List<T>?> GetItemsByConditionAsync<T>(Expression<Func<T, bool>> criteria)
+    public async Task<List<T>?> GetItemsByConditionAsync<T>(Expression<Func<T, bool>> criteria) where T : BaseEntity
     {
         var collection = DatabaseContextClient.GetCollection<T>();
         var results = await collection

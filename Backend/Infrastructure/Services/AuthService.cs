@@ -152,8 +152,8 @@ public class AuthService : IAuthService
                 ClaimValueTypes.Integer64)
         };
 
-
         claims.AddRange(user.Roles.Select(role => new Claim(ClaimTypes.Role, role)));
+        claims.AddRange(user.Permissions.Select(permission => new Claim("Permission", permission)));
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(ConfigurationHelper.GetConfigurationValue("Jwt:SecretKey")));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);

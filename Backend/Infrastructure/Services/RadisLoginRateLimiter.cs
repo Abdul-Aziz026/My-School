@@ -1,4 +1,4 @@
-public class LoginRateLimiter : ILoginRateLimiter
+public class RadisLoginRateLimiter : ILoginRateLimiter
 {
     public async Task<bool> IsAllowedAsync(string key)
     {

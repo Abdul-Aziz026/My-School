@@ -50,6 +50,7 @@ public class AuthService : IAuthService
             Email = registerUser.Email,
             PasswordHash = passwordHash,
             Roles = new List<string> { "User" }, // Default role
+            Permissions = new List<string> { "ViewProduct" } // Default permission
             CreatedAt = DateTime.UtcNow
         };
 

@@ -6,18 +6,12 @@ using System.Linq.Expressions;
 
 namespace Infrastructure.Persistence;
 
-public class DatabaseContext : IDatabaseContext
+public class DatabaseContext
 {
     private readonly ILogger<DatabaseContext> _logger;
     public DatabaseContext(ILogger<DatabaseContext> logger)
     {
         _logger = logger;
-    }
-
-    public async Task<string> Hello<T>()
-    {
-        var collection = DatabaseContextClient.GetCollection<T>();
-        return "Alhamdulillah from DatabaseContext";
     }
 
     public async Task<List<T>> GetAllAsync<T>() where T : BaseEntity

@@ -1,7 +1,10 @@
 using API.MiddleWare;
-using Application.Interfaces;
-using Infrastructure.Configuration;
+using Application.Authorization;
+using Application.Interfaces.Repositories;
+using Application.Interfaces.Services;
+using Infrastructure.Helper;
 using Infrastructure.Persistence;
+using Infrastructure.Repositories;
 using Infrastructure.Services;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
@@ -85,8 +88,11 @@ builder.Services.AddAuthorization(options =>
 
 // Add services to the container.
 builder.Services.AddControllers();
-builder.Services.AddSingleton<IDatabaseContext, DatabaseContext>();
+builder.Services.AddSingleton<DatabaseContext>();
 builder.Services.AddSingleton<IAuthService, AuthService>();
+builder.Services.AddSingleton<IJwtTokenService, JwtTokenService>();
+builder.Services.AddSingleton<IRefreshTokenRepository, RefreshTokenRepository>();
+builder.Services.AddSingleton<IUserRepository, UserRepository>();
 
 // Learn more about configuring OpenAPI 
 builder.Services.AddOpenApi();

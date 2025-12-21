@@ -5,7 +5,8 @@ public class RadisLoginRateLimiter : ILoginRateLimiter
         string attemptKey = $"login_attempt:{key}";
         string blockKey = $"login_block:{key}";
 
-        ...
+        //...
+        throw new NotImplementedException() ;
     }
 
     public async Task ResetAsync(string key)
@@ -13,6 +14,7 @@ public class RadisLoginRateLimiter : ILoginRateLimiter
         string attemptKey = $"login_attempt:{key}";
         string blockKey = $"login_block:{key}";
 
-        ...
+        //...
+        throw new NotImplementedException();
     }
 }

@@ -1,6 +1,6 @@
 ﻿using Application.DTOs;
 using Application.Helper;
-using Application.Interfaces;
+using Application.Interfaces.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
@@ -91,7 +91,7 @@ public class AuthController : Controller
             {
                 Token = tokenResponse.AccessToken,
                 TokenExpiry = tokenResponse.AccessTokenExpiry,
-                User = userInfo
+                User = userInfo!
             };
 
             await SetRefreshTokenInCookie(tokenResponse.RefreshToken, tokenResponse.RefreshTokenExpiry);

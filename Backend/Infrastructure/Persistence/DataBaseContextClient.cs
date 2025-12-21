@@ -1,7 +1,5 @@
-﻿using MongoDB.Driver;
-using Microsoft.Extensions.Configuration;
-using Infrastructure.Configuration;
-using System.Runtime.CompilerServices;
+﻿using Infrastructure.Helper;
+using MongoDB.Driver;
 
 namespace Infrastructure.Persistence;
 

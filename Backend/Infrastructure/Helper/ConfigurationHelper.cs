@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
 using System;
 
-namespace Infrastructure.Configuration;
+namespace Infrastructure.Helper;
 
 public class ConfigurationHelper
 {

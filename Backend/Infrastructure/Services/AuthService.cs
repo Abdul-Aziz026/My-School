@@ -141,16 +141,17 @@ public class AuthService : IAuthService
 
         var claims = new List<Claim>
         {
-            new Claim(JwtRegisteredClaimNames.Sub, user.Id), // Subject
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()), // JWT ID
+            new Claim(JwtRegisteredClaimNames.Sub, user.Id),               // USER ID
+            new Claim(ClaimTypes.NameIdentifier, user.Id),                 // USER ID (ASP.NET)
+            new Claim(JwtRegisteredClaimNames.Email, user.Email),          // EMAIL
+            new Claim(ClaimTypes.Name, user.UserName),
+            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
             new Claim(
                 JwtRegisteredClaimNames.Iat,
                 DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(),
-                ClaimValueTypes.Integer64
-            ), // Issued At
-            new Claim(ClaimTypes.NameIdentifier, user.Email),
-            new Claim(ClaimTypes.Name, user.UserName)
+                ClaimValueTypes.Integer64)
         };
+
 
         claims.AddRange(user.Roles.Select(role => new Claim(ClaimTypes.Role, role)));
 

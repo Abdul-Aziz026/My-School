@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Application.Helper;
+using Microsoft.AspNetCore.Authorization;
 
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -14,6 +15,7 @@ public class TestController : ControllerBase
     [HttpGet("debug-auth")]
     public IActionResult DebugAuth()
     {
+        Console.WriteLine(TellMe.UserId);
         return Ok(new
         {
             IsAuthenticated = User.Identity?.IsAuthenticated,

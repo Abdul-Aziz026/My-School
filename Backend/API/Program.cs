@@ -3,10 +3,10 @@ using Application.Interfaces;
 using Infrastructure.Configuration;
 using Infrastructure.Persistence;
 using Infrastructure.Services;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
 using Serilog;
+using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -23,6 +23,7 @@ builder.Host.UseSerilog();
 // Initialize Configuration Helper
 ConfigurationHelper.Initialize(builder.Configuration);
 
+JwtSecurityTokenHandler.DefaultMapInboundClaims = false;
 // Register JWT Authentication
 builder.Services.AddAuthentication("Bearer") // Use JWT Bearer tokens to authenticate requests
      // registers the JWT Bearer authentication handler
@@ -60,6 +61,7 @@ builder.Services.AddAuthentication("Bearer") // Use JWT Bearer tokens to authent
 
         //Log.Information($"JWT Config - Issuer: {issuer}, Audience: {audience}, KeyLength: {secretKey?.Length}");
 
+        options.MapInboundClaims = false;
         // Configure token validation parameters
         options.TokenValidationParameters = new TokenValidationParameters
         {
@@ -98,6 +100,7 @@ if (app.Environment.IsDevelopment())
 
 // authentication & authorization middlewares
 app.UseAuthentication();
+app.UseAuthMiddleware();
 app.UseAuthorization();
 
 // Custom middlewate
@@ -107,7 +110,6 @@ app.UseAuthorization();
 //    {
 //        app.UseAuthMiddleware();
 //    });
-app.UseAuthMiddleware();
 
 
 // Configure routing for controllers

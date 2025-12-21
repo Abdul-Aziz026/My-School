@@ -1,4 +1,5 @@
 ﻿using Application.DTOs;
+using Application.Helper;
 using Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -137,7 +138,6 @@ public class AuthController : Controller
         };
 
         Response.Cookies.Append("refreshToken", refreshToken, cookieOptions);
-        Response.Headers["refreshToken"] = refreshToken;
     }
 
     private string GetUserIdFromToken(string token)

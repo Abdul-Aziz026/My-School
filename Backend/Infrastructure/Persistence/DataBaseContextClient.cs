@@ -23,7 +23,7 @@ public class DatabaseContextClient
         return client.GetDatabase(DatabaseName);
     }
 
-    public static IMongoCollection<T> GetCollection<T>(string collectionName = null)
+    public static IMongoCollection<T> GetCollection<T>(string collectionName = null!)
     {
         var database = GetDataBase();
         collectionName = collectionName ?? typeof(T).Name.ToLower();

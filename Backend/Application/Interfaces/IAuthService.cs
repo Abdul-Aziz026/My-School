@@ -1,12 +1,13 @@
-﻿
+﻿// Application/Interfaces/IAuthService.cs
 using Application.DTOs;
-using Domain.Entities;
 
 namespace Application.Interfaces;
 
 public interface IAuthService
 {
-    Task<string?> LoginAsync(LoginDto user);
-    Task<string> RegisterAsync(RegisterDto user);
-    Task<string> CreateJwtToken(User user);
+    Task<RefreshTokenResponse> RegisterAsync(RegisterDto registerUser);
+    Task<RefreshTokenResponse?> LoginAsync(LoginDto loginUser);
+    Task<RefreshTokenResponse> RefreshTokenAsync(string token);
+    Task RevokeRefreshTokenAsync(string token);
+    Task<UserInfo?> GetUserInfoAsync(string userId);
 }

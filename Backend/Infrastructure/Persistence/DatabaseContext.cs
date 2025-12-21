@@ -92,6 +92,28 @@ public class DatabaseContext : IDatabaseContext
         }
     }
 
+    public async Task<int> DeleteManyAsync<T>(IEnumerable<T> entities) where T : BaseEntity
+    {
+        try
+        {
+            var collection = DatabaseContextClient.GetCollection<T>();
+            var ids = entities.Select(e => e.Id);
+            var result = await collection.DeleteManyAsync(
+                Builders<T>.Filter.In(x => x.Id, ids)
+            );
+
+            _logger.LogInformation(
+                $"Deleted {result.DeletedCount} {typeof(T).Name} documents");
+
+            return (int)result.DeletedCount;
+        }
+        catch
+        {
+            _logger.LogError($"DeleteManyAsync failed for type {typeof(T).FullName}");
+            return 0;
+        }
+    }
+
     public async Task<bool> SoftDeleteAsync<T>(T entity) where T : BaseEntity
     {
         try
@@ -119,15 +141,17 @@ public class DatabaseContext : IDatabaseContext
     public async Task<T?> GetItemByConditionAsync<T>(Expression<Func<T, bool>> criteria) where T : BaseEntity
     {
         var collection = DatabaseContextClient.GetCollection<T>();
-        var response = await collection.Find(criteria).FirstOrDefaultAsync();
+        var filter = Builders<T>.Filter.Where(criteria);
+        var response = await collection.Find(filter).FirstOrDefaultAsync();
         return response;
     }
 
     public async Task<List<T>?> GetItemsByConditionAsync<T>(Expression<Func<T, bool>> criteria) where T : BaseEntity
     {
         var collection = DatabaseContextClient.GetCollection<T>();
+        var filter = Builders<T>.Filter.Where(criteria);
         var results = await collection
-            .Find(criteria)
+            .Find(filter)
             .ToListAsync();   // fetch all matching documents
         return results;
     }

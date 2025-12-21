@@ -76,7 +76,12 @@ builder.Services.AddAuthentication("Bearer") // Use JWT Bearer tokens to authent
         };
     });
 
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("CanViewUsers", policy =>
+        //policy.Requirements.Add(new PermissionRequirement(Permissions.ViewUsers)));
+        policy.Requirements.Add(new PermissionRequirement("CanViewUsersPermission")));
+});
 
 // Add services to the container.
 builder.Services.AddControllers();

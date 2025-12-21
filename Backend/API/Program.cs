@@ -107,7 +107,7 @@ app.UseAuthorization();
 //    {
 //        app.UseAuthMiddleware();
 //    });
-app.UseAuthMiddleware();
+//app.UseAuthMiddleware();
 
 
 // Configure routing for controllers

@@ -16,10 +16,6 @@ public class AuthMiddleware
 
     public Task Invoke(HttpContext httpContext)
     {
-        if (httpContext.Request.Headers.ContainsKey("Authorization"))
-        {
-            // todo for store user info...
-        }
         //httpContext.Response.Headers["Token"] = httpContext.Request.Query["Token"];
         //httpContext.Response.Cookies.Append("token", httpContext.Request.Query["Token"]!);
         return _next(httpContext);

@@ -32,6 +32,7 @@ public class TestController : ControllerBase
     /// User-only endpoint
     /// </summary>
     [Authorize(Roles = "User")]
+    [Authorize(Policy = "CanViewUsers")]
     [HttpGet("user")]
     public IActionResult UserEndpoint() => Ok(new { message = "User access granted" });
 

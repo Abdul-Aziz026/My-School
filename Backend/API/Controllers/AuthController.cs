@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using System;
 using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace API.Controllers;
@@ -21,8 +22,8 @@ public class AuthController : Controller
         _authService = authService;
     }
 
-    [EnableRateLimiting("register")] // Apply rate limiting to register endpoint 3 attempts per 1 hour
     [HttpPost("register")]
+    [EnableRateLimiting("register")] // Apply rate limiting to register endpoint 3 attempts per 1 hour
     public async Task<ActionResult<AuthResponse>> Register(RegisterDto user)
     {
         try
@@ -51,8 +52,8 @@ public class AuthController : Controller
         }
     }
 
-    [EnableRateLimiting("login")] // Apply rate limiting to login endpoint 5 attempts per 10 minute
     [HttpPost("login")]
+    [EnableRateLimiting("login")] // Apply rate limiting to login endpoint 5 attempts per 1 minute
     public async Task<ActionResult<AuthResponse>> Login(LoginDto user)
     {
         var tokenResponse = await _authService.LoginAsync(user);
@@ -128,6 +129,25 @@ public class AuthController : Controller
 
         return Ok(new { Message = "Logged out successfully" });
     }
+    [EnableRateLimiting("api")]
+    //[Authorize]
+    [HttpGet("me")]
+    public async Task<ActionResult<UserInfo>> Me()
+    {
+        var userId = GetUserIdFromClaims(User);
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            return Unauthorized(new { Error = "Invalid token or user id not found" });
+        }
+
+        var userInfo = await _authService.GetUserInfoAsync(userId);
+        if (userInfo is null)
+        {
+            return NotFound(new { Error = "User not found" });
+        }
+
+        return Ok(userInfo);
+    }
 
     private async Task SetRefreshTokenInCookie(string refreshToken, DateTime refreshTokenExpiry)
     {
@@ -149,5 +169,12 @@ public class AuthController : Controller
         var jwtToken = handler.ReadJwtToken(token);
         return jwtToken.Subject;
         // jwtToken.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Sub)?.Value // ✅ Also reads "sub"
+    }
+
+    private static string? GetUserIdFromClaims(ClaimsPrincipal user)
+    {
+        // prefer 'sub', fallback to NameIdentifier
+        return user?.FindFirst(JwtRegisteredClaimNames.Sub)?.Value
+            ?? user?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
     }
 }

@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Authorization;
 
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using System.Security.Claims;
 
 /// <summary>
@@ -11,6 +12,7 @@ using System.Security.Claims;
 [Route("api/[controller]")]
 public class TestController : ControllerBase
 {
+    [EnableRateLimiting("api")] // apply rate limiting enable 100 requests per 1 minutes
     [Authorize]
     [HttpGet("debug-auth")]
     public IActionResult DebugAuth()

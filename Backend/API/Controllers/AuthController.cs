@@ -3,6 +3,7 @@ using Application.Helper;
 using Application.Interfaces.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Threading.Tasks;
@@ -20,6 +21,7 @@ public class AuthController : Controller
         _authService = authService;
     }
 
+    [EnableRateLimiting("register")] // Apply rate limiting to register endpoint 3 attempts per 1 hour
     [HttpPost("register")]
     public async Task<ActionResult<AuthResponse>> Register(RegisterDto user)
     {
@@ -49,6 +51,7 @@ public class AuthController : Controller
         }
     }
 
+    [EnableRateLimiting("login")] // Apply rate limiting to login endpoint 5 attempts per 10 minute
     [HttpPost("login")]
     public async Task<ActionResult<AuthResponse>> Login(LoginDto user)
     {

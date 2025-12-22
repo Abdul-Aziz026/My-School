@@ -6,13 +6,56 @@ using Infrastructure.Helper;
 using Infrastructure.Persistence;
 using Infrastructure.Repositories;
 using Infrastructure.Services;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
 using Serilog;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Configure rate limiting
+builder.Services.AddRateLimiter(options =>
+{
+    // Global rate limiter: 1000 requests per minute with a queue of 100
+    options.AddFixedWindowLimiter("GlobalLimiter", opt =>
+    {
+        opt.Window = TimeSpan.FromMinutes(1);    // Time window of 1 minute
+        opt.PermitLimit = 1000;                   // Allow 100 requests per minute
+        opt.QueueLimit = 100;                      // Queue limit of 5
+        opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+    });
+
+    // Policy 2: Login endpoint - 5 attempts per 10 minutes
+    options.AddFixedWindowLimiter("login", opt =>
+    {
+        opt.PermitLimit = 5;
+        opt.Window = TimeSpan.FromMinutes(10);
+        opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+        opt.QueueLimit = 2; // No queuing
+    });
+
+    // Policy 3: Registration endpoint - 3 attempts per hour
+    options.AddFixedWindowLimiter("register", opt =>
+    {
+        opt.PermitLimit = 3;
+        opt.Window = TimeSpan.FromHours(1);
+        opt.QueueLimit = 0;
+    });
+
+    // Policy 4: API endpoint - 100 requests per minute
+    options.AddSlidingWindowLimiter("api", opt =>
+    {
+        opt.PermitLimit = 100;
+        opt.Window = TimeSpan.FromMinutes(1);
+        opt.SegmentsPerWindow = 6; // 10-second segments
+        opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+        opt.QueueLimit = 0;
+    });
+
+});
 
 // Configure Serilog 
 Log.Logger = new LoggerConfiguration()
@@ -98,6 +141,16 @@ builder.Services.AddSingleton<IUserRepository, UserRepository>();
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
+
+// Use "GlobalLimiter" as rate limiting middleware globally 1000 requests per minute
+app.UseRateLimiter(new RateLimiterOptions
+{
+    OnRejected = async (context, cancellationToken) =>
+    {
+        context.HttpContext.Response.StatusCode = 429;
+        await context.HttpContext.Response.WriteAsync("Too many requests (GlobalLimiter)", cancellationToken);
+    },
+});
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

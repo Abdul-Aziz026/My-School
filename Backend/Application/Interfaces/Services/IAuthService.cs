@@ -1,7 +1,4 @@
-﻿// Application/Interfaces/IAuthService.cs
-
-// Application/Interfaces/IAuthService.cs
-using Application.DTOs;
+﻿using Application.DTOs;
 
 namespace Application.Interfaces.Services;
 

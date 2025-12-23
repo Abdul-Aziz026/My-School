@@ -1,7 +1,6 @@
 using API.Extensions;
 using API.MiddleWare;
 using Infrastructure.Helper;
-using Microsoft.AspNetCore.RateLimiting;
 using Scalar.AspNetCore;
 using Serilog;
 

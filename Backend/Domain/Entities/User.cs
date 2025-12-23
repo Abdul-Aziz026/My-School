@@ -14,4 +14,9 @@ public class User : BaseEntity
     public bool IsActive { get; set; } = true;
     public string? RefreshToken { get; set; }
     public DateTime? RefreshTokenExpiry { get; set; }
+
+    // Lockout & Audit
+    public int FailedLoginAttempts { get; set; } = 0;
+    public DateTime? LockoutEnd { get; set; }
+    public bool LockoutEnabled { get; set; } = true;
 }

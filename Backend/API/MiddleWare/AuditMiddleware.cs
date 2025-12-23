@@ -22,20 +22,19 @@ public class AuditMiddleware
 
     public async Task InvokeAsync(HttpContext context, IAuditService auditService)
     {
-        var start = DateTime.UtcNow;
+        var startTime = DateTime.UtcNow;
         var request = context.Request;
         var path = request.Path;
         var method = request.Method;
-
-        var ip = context.Connection.RemoteIpAddress?.ToString();
+        string? ip = GetClientIpAddress(context);
         var userAgent = request.Headers["User-Agent"].ToString();
         var userId = context.User?.FindFirst(JwtRegisteredClaimNames.Sub)?.Value
                      ?? context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        
+
         await _next(context);
         if (!AuthPathContains(path)) return;
         var statusCode = context.Response.StatusCode;
-        var duration = DateTime.UtcNow - start;
+        var duration = DateTime.UtcNow - startTime;
 
         var authEvent = MapAuthEvent(path, statusCode);
         var metaData = new Dictionary<string, string?>
@@ -43,7 +42,7 @@ public class AuditMiddleware
             { "Path", path },
             { "Method", method },
             { "StatusCode", statusCode.ToString() },
-            { "DurationMs", duration.TotalMilliseconds.ToString("F1") },
+            { "DurationMs", duration.TotalMilliseconds.ToString("F2") },
             { "IpAddress", ip },
             { "UserAgent", userAgent }
         };

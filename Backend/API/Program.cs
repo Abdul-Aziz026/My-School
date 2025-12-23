@@ -17,8 +17,7 @@ builder.Host.UseSerilog();
 
 // Initialize Configuration Helper
 ConfigurationHelper.Initialize(builder.Configuration);
-
-
+builder.Services.AddAuditLogging();
 builder.Services.AddRateLimitingServices();
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
@@ -41,6 +40,7 @@ if (app.Environment.IsDevelopment())
 // authentication & authorization middlewares
 app.UseAuthentication();
 app.UseAuthMiddleware();
+app.UseAuditMiddleware();
 app.UseAuthorization();
 
 app.MapControllers();

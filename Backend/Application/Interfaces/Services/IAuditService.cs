@@ -6,5 +6,5 @@ namespace Application.Interfaces.Services;
 public interface IAuditService
 {
     Task LogAsync(AuditLog log);
-    Task LogEventAsync(AuthActionEventType eventType, string? userId = null, string? description = null, IDictionary<string, string>? metadata = null);
+    Task LogEventAsync(AuthEventType eventType, string? userId = null, string? description = null, Dictionary<string, string>? metadata = null);
 }

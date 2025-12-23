@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Domain.Enums;
 
-public enum AuthActionEventType
+public enum AuthEventType
 {
     RegisterSuccess,
     RegisterFailed,

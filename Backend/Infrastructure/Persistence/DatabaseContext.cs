@@ -108,30 +108,6 @@ public class DatabaseContext
         }
     }
 
-    public async Task<bool> SoftDeleteAsync<T>(T entity) where T : BaseEntity
-    {
-        try
-        {
-            var collection = DatabaseContextClient.GetCollection<T>();
-            entity.IsDeleted = true;
-            var response = await UpdateAsync<T>(entity);
-            if (response)
-            {
-                _logger.LogInformation($"Soft deleted entity of type {typeof(T).FullName} with Id {entity.Id}");
-            }
-            else
-            {
-                _logger.LogWarning($"SoftDeleteAsync did not modify any document for type {typeof(T).FullName} with Id {entity.Id}");
-            }
-            return response;
-        }
-        catch
-        {
-            _logger.LogError($"SoftDeleteAsync failed for type {typeof(T).FullName} with Id {entity.Id}");
-            return false;
-        }
-    }
-
     public async Task<T?> GetItemByConditionAsync<T>(Expression<Func<T, bool>> criteria) where T : BaseEntity
     {
         var collection = DatabaseContextClient.GetCollection<T>();

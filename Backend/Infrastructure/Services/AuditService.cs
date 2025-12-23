@@ -1,20 +1,31 @@
-﻿using Application.Interfaces.Services;
+﻿using Domain.Enums;
 using Domain.Entities;
-using Domain.Enums;
 using Infrastructure.Persistence;
+using Application.Interfaces.Services;
 
 namespace Infrastructure.Services;
 
 public class AuditService(DatabaseContext Context) : IAuditService
 {
-
     public async Task LogAsync(AuditLog log)
     {
-        await Context.AddAsync<AuditLog>(log);
+        await Context.AddAsync(log);
     }
 
-    public Task LogEventAsync(AuthActionEventType eventType, string? userId = null, string? description = null, IDictionary<string, string>? metadata = null)
+    public Task LogEventAsync(AuthEventType eventType, 
+        string? userId = null, 
+        string? description = null, 
+        Dictionary<string, string>? metadata = null)
     {
-        throw new NotImplementedException();
+        var log = new AuditLog
+        {
+            UserId = userId!,
+            EventType = eventType,
+            EventName = eventType.ToString(),
+            Description = description!,
+            Metadata = metadata
+        };
+
+        return LogAsync(log);
     }
 }

@@ -61,6 +61,11 @@ public class AuditMiddleware
         await auditService.LogAsync(log);
     }
 
+    private static string? GetClientIpAddress(HttpContext context)
+    {
+        return context.Connection.RemoteIpAddress?.ToString();
+    }
+
     private bool AuthPathContains(string path)
     {
         if (string.IsNullOrEmpty(path)) return false;

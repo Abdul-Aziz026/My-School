@@ -1,6 +1,7 @@
 ﻿using Application.DTOs;
 using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
+using Application.Settings;
 using Domain.Entities;
 using System.Security.Cryptography;
 using System.Text;
@@ -13,13 +14,18 @@ public class AuthService : IAuthService
     private readonly IRefreshTokenRepository _refreshTokenRepository;
     private readonly IJwtTokenService _jwtTokenService;
 
+    private readonly AuthLockoutSettings _authLockoutSettings;
+
     public AuthService(IUserRepository userRepository,
                        IRefreshTokenRepository refreshTokenRepository,
-                       IJwtTokenService jwtTokenService)
+                       IJwtTokenService jwtTokenService,
+                       AuthLockoutSettings authLockoutSettings)
     {
         _userRepository = userRepository;
         _refreshTokenRepository = refreshTokenRepository;
         _jwtTokenService = jwtTokenService;
+
+        _authLockoutSettings = authLockoutSettings;
     }
 
 
@@ -52,7 +58,6 @@ public class AuthService : IAuthService
         return await _jwtTokenService.GenerateTokenResponseAsync(newUser);
     }
 
-
     /// <summary>
     /// User login method
     /// </summary>
@@ -67,10 +72,28 @@ public class AuthService : IAuthService
         {
             return null!;
         }
+
+        if (!user.LockoutEnabled && user.LockoutEnd.HasValue && user.LockoutEnd.Value > DateTime.UtcNow)
+        {
+            return null!;
+            //var remaining = user.LockoutEnd.Value - DateTime.Now;
+            //return $"Account locked. Try again in {remaining.Minutes} minutes and {remaining.Seconds} seconds.";
+        }
+
         var passwordMatches = BCrypt.Net.BCrypt.Verify(loginUser.Password, user.PasswordHash);
         if (!passwordMatches)
         {
             return null;
+        }
+        user.FailedLoginAttempts++;
+        if (user.FailedLoginAttempts >= _authLockoutSettings.MaxFailedLoginAttempts)
+        {
+            return null!;
+            //user.LockoutEnd = DateTime.Now.AddMinutes(_authLockoutSettings.LockoutDuration);
+            //user.LockoutEnabled = false;
+            // await _userRepository.UpdateAsync<User>(user);
+
+            //return  $"Account locked due to many failed attempts. Try again after {LockoutSettings.LockoutMinutes} minutes.";
         }
         return await _jwtTokenService.GenerateTokenResponseAsync(user);
     }

@@ -29,6 +29,7 @@ public class AuthController : Controller
 
             var response = new AuthResponse
             {
+                Status = ResultStatus.Succeeded,
                 Token = tokenResponse.AccessToken,
                 TokenExpiry = tokenResponse.AccessTokenExpiry,
                 User = userInfo!
@@ -63,6 +64,7 @@ public class AuthController : Controller
 
         var response = new AuthResponse
         {
+            Status = ResultStatus.Succeeded,
             Token = tokenResponse.AccessToken,
             TokenExpiry = tokenResponse.AccessTokenExpiry,
             User = userInfo!
@@ -89,6 +91,7 @@ public class AuthController : Controller
 
             var response = new AuthResponse
             {
+                Status = ResultStatus.Succeeded,
                 Token = tokenResponse.AccessToken,
                 TokenExpiry = tokenResponse.AccessTokenExpiry,
                 User = userInfo!

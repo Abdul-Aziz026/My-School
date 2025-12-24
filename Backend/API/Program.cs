@@ -18,6 +18,7 @@ builder.Host.UseSerilog();
 // Initialize Configuration Helper
 ConfigurationHelper.Initialize(builder.Configuration);
 builder.Services.AddAuditLogging();
+builder.Services.AddConfigurationSettings(builder.Configuration);
 builder.Services.AddRateLimitingServices();
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();

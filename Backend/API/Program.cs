@@ -28,17 +28,17 @@ builder.Services.AddApplicationServices();
 
 var app = builder.Build();
 
-// Use "GlobalLimiter" as rate limiting middleware globally 1000 requests per minute
+// Use "GlobalLimiter" as rate limiting middleware globally 1000 requests per minute...
 app.UseRateLimiter();
 
-// Configure the HTTP request pipeline.
+// Configure the HTTP request pipeline...
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
     app.MapScalarApiReference(); // add Scalar.AspNetCore...
 }
 
-// authentication & authorization middlewares
+// authentication & authorization middlewares...
 app.UseAuthentication();
 app.UseAuthMiddleware();
 app.UseAuditMiddleware();

@@ -45,6 +45,7 @@ if (app.Environment.IsDevelopment())
 
 // authentication & authorization middlewares...
 app.UseAuthentication();
+app.UseGlobalExceptionMiddleware();
 app.UseAuthMiddleware();
 app.UseAuditMiddleware();
 app.UseAuthorization();

@@ -42,6 +42,7 @@ public class BrevoEmailService : IEmailService
 
 
             var result = await _apiInstance.SendTransacEmailAsync(sendSmtpEmail);
+            Console.WriteLine($"Brevo email sent to {toMail}. Response id: {result?.MessageId}");
             return result is not null;
         }
         catch (Exception ex)
@@ -76,6 +77,7 @@ public class BrevoEmailService : IEmailService
             );
 
             var result = await _apiInstance.SendTransacEmailAsync(sendSmtpEmail);
+            Console.WriteLine($"Brevo email sent to {toMail}. Response id: {result?.MessageId}");
             return result is not null;
         }
         catch (Exception ex)

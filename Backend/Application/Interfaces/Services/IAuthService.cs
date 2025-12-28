@@ -9,4 +9,7 @@ public interface IAuthService
     Task<RefreshTokenResponse> RefreshTokenAsync(string token);
     Task<UserInfo?> GetUserInfoAsync(string userId);
     Task RevokeRefreshTokenAsync(string refreshToken);
+    // Password reset flows
+    Task ForgotPasswordAsync(ForgotPasswordDto dto);               // sends reset email if user exists (idempotent)
+    Task ResetPasswordAsync(ResetPasswordDto dto);
 }

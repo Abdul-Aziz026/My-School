@@ -148,6 +148,29 @@ public class AuthController : Controller
         return Ok(userInfo);
     }
 
+    [HttpPost("forgot-password")]
+    public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto dto)
+    {
+        // Idempotent: always return 200 to avoid user enumeration
+        await _authService.ForgotPasswordAsync(dto);
+        return Ok(new { Message = "If the account exists, a password reset email has been sent." });
+    }
+
+    [HttpPost("reset-password")]
+    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto dto)
+    {
+        try
+        {
+            await _authService.ResetPasswordAsync(dto);
+            return Ok(new { Message = "Password has been reset successfully." });
+        }
+        catch (InvalidOperationException ex)
+        {
+            // Generic message to caller
+            return BadRequest(new { Error = ex.Message });
+        }
+    }
+
     private async Task SetRefreshTokenInCookie(string refreshToken, DateTime refreshTokenExpiry)
     {
         var cookieOptions = new CookieOptions

@@ -179,10 +179,118 @@ public class AuthService : IAuthService
         }
     }
 
+    public async Task ForgotPasswordAsync(ForgotPasswordDto dto)
+    {
+        if (dto is null || string.IsNullOrWhiteSpace(dto.Email))
+            return; // idempotent, do not reveal
+
+        try
+        {
+            var user = await _userRepository.GetByEmailAsync(dto.Email);
+            if (user is null)
+                return; // idempotent, do not reveal
+
+            var rawToken = GenerateSecureToken();
+            var tokenHash = ComputeTokenHash(rawToken);
+
+            user.PasswordResetTokenHash = tokenHash;
+            user.PasswordResetExpiry = DateTime.UtcNow.AddMinutes(15); // Token valid for 15 minutes
+
+            await _userRepository.UpdateAsync(user);
+            var frontendBase = $"http://codeforces.com";
+            var resetLink = string.IsNullOrWhiteSpace(frontendBase) ?
+                $"http://localhost:5000/reset-password?token={rawToken}&email={Uri.EscapeDataString(user.Email)}"
+                : $"{frontendBase}/reset-password?token={rawToken}&email={Uri.EscapeDataString(user.Email)}";
+
+            var subject = "Reset your password";
+            var body = $"<p>Click the link below to reset your password. This link is valid for 15 minutes.</p>" +
+                       $"<a href='{resetLink}'>Reset Password</a>";
+            var sent = await _emailService.SendEmailAsync(user.Email, user.UserName, subject, body);
+            if (sent)
+            {
+                Console.WriteLine("Password reset email sent for user {UserId}", user.Id);
+            }
+            else
+            {
+                Console.WriteLine("Password reset email failed to send for user {UserId}", user.Id);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"{ex}Error in ForgotPasswordAsync for {dto.Email}");
+            // Do not throw to caller to avoid leaking internal state
+        }
+    }
+
+    public async Task ResetPasswordAsync(ResetPasswordDto dto)
+    {
+        if (dto is null || string.IsNullOrWhiteSpace(dto.Token) || string.IsNullOrWhiteSpace(dto.Email) || string.IsNullOrWhiteSpace(dto.NewPassword))
+            throw new InvalidOperationException("Invalid password reset request.");
+        try
+        {
+            var user = await _userRepository.GetByEmailAsync(dto.Email);
+            if(user is null)
+            {
+                Console.WriteLine("ResetPassword attempted for non-existent email {Email}", dto.Email);
+                throw new InvalidOperationException("Invalid token or email."); // generic
+            }
+
+            // Verify token: compare stored hash and check expiry
+            if (string.IsNullOrWhiteSpace(user.PasswordResetTokenHash) || !user.PasswordResetExpiry.HasValue || user.PasswordResetExpiry.Value < DateTime.UtcNow)
+            {
+                Console.WriteLine("ResetPassword token missing or expired for user {UserId}", user.Id);
+                throw new InvalidOperationException("Invalid or expired token.");
+            }
+            if (user.PasswordResetExpiry < DateTime.UtcNow)
+            {
+                Console.WriteLine("Token expired");
+                throw new InvalidOperationException("Token has expired.");
+            }
+
+            // Update password
+            var newHash = BCrypt.Net.BCrypt.HashPassword(dto.NewPassword);
+            user.PasswordHash = newHash;
+
+            // clear and reset all the fields
+            user.PasswordResetTokenHash = null;
+            user.PasswordResetExpiry = null;
+            user.FailedLoginAttempts = 0;
+            user.RefreshToken = null;
+            user.RefreshTokenExpiry = null;
+
+            var updated = await _userRepository.UpdateAsync(user);
+            if (updated)
+            {
+                Console.WriteLine("Password reset successful for user {UserId}", user.Id);
+            }
+            else
+            {
+                Console.WriteLine($"Password reset failed during update for user {user.Id}");
+                throw new InvalidOperationException("Failed to reset password.");
+            }
+
+        }
+        catch { }
+    }
     private string ComputeTokenHash(string token)
     {
         using var sha256 = SHA256.Create();
         var hash = sha256.ComputeHash(Encoding.UTF8.GetBytes(token));
         return Convert.ToBase64String(hash);
+    }
+    private static string GenerateSecureToken()
+    {
+        var bytes = new byte[32];
+        using var rng = RandomNumberGenerator.Create();
+        rng.GetBytes(bytes);
+        return Base64UrlEncode(bytes);
+    }
+
+    private static string Base64UrlEncode(byte[] input)
+    {
+        return Convert.ToBase64String(input)
+            .TrimEnd('=')
+            .Replace('+', '-')
+            .Replace('/', '_');
     }
 }

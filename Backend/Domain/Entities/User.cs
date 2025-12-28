@@ -19,4 +19,8 @@ public class User : BaseEntity
     public int FailedLoginAttempts { get; set; } = 0;
     public DateTime? LockoutEnd { get; set; }
     public bool LockoutEnabled { get; set; } = true;
+
+    // Password reset fields (secure: store only hashed token)
+    public string? PasswordResetTokenHash { get; set; }
+    public DateTime? PasswordResetExpiry { get; set; }
 }

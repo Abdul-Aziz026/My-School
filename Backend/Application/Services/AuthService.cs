@@ -3,6 +3,7 @@ using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
 using Application.Settings;
 using Domain.Entities;
+using Microsoft.Extensions.Options;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -13,19 +14,22 @@ public class AuthService : IAuthService
     private readonly IUserRepository _userRepository;
     private readonly IRefreshTokenRepository _refreshTokenRepository;
     private readonly IJwtTokenService _jwtTokenService;
+    private readonly IEmailService _emailService;
 
     private readonly AuthLockoutSettings _authLockoutSettings;
 
     public AuthService(IUserRepository userRepository,
                        IRefreshTokenRepository refreshTokenRepository,
                        IJwtTokenService jwtTokenService,
-                       AuthLockoutSettings authLockoutSettings)
+                       IEmailService emailService,
+                       IOptions<AuthLockoutSettings> authLockoutSettings)
     {
         _userRepository = userRepository;
         _refreshTokenRepository = refreshTokenRepository;
         _jwtTokenService = jwtTokenService;
 
-        _authLockoutSettings = authLockoutSettings;
+        _authLockoutSettings = authLockoutSettings.Value;
+        _emailService = emailService;
     }
 
 
@@ -36,10 +40,12 @@ public class AuthService : IAuthService
     /// <returns>A JWT token as a string if registration is successful; otherwise, null</returns>
     public async Task<RefreshTokenResponse> RegisterAsync(RegisterDto registerUser)
     {
+        var response = new RefreshTokenResponse();
         var user = await _userRepository.GetByEmailAsync(registerUser.Email);
         if (user is not null)
         {
-            return default!;
+            response.Result = ActionEvent.Failed;
+            //return response;
         }
         // Hash the password with BCrypt
         var passwordHash = BCrypt.Net.BCrypt.HashPassword(registerUser.Password);
@@ -54,7 +60,12 @@ public class AuthService : IAuthService
             CreatedAt = DateTime.UtcNow
         };
 
-        await _userRepository.AddAsync(newUser);
+        //await _userRepository.AddAsync<User>(newUser);
+        await _emailService.SendEmailAsync(newUser.Email,
+                                               newUser.UserName,
+                                               "Register Successfully in My School",
+                                               "<h1>Welcome to Our Service!</h1><p>Thank you for registering, " + newUser.UserName + ".</p>"
+                                            );
         return await _jwtTokenService.GenerateTokenResponseAsync(newUser);
     }
 
@@ -65,19 +76,23 @@ public class AuthService : IAuthService
     /// <returns>A JWT token as a string if login is successful; otherwise, null</returns>
     public async Task<RefreshTokenResponse?> LoginAsync(LoginDto loginUser)
     {
+        var response = new RefreshTokenResponse();
         //Expression<Func<User, bool>> filter = o => true;
         //filter = filter.And(u => u.Email == loginUser.Email);
         var user = await _userRepository.GetByEmailAsync(loginUser.Email);
         if (user is null)
         {
-            return null!;
+            response.Result = ActionEvent.Failed;
+            response.ErrorMessage = "Invalid email or password.";
+            return response;
         }
 
         if (!user.LockoutEnabled && user.LockoutEnd.HasValue && user.LockoutEnd.Value > DateTime.UtcNow)
         {
-            return null!;
-            //var remaining = user.LockoutEnd.Value - DateTime.Now;
-            //return $"Account locked. Try again in {remaining.Minutes} minutes and {remaining.Seconds} seconds.";
+            var remaining = user.LockoutEnd.Value - DateTime.Now;
+            response.ErrorMessage = $"Account locked. Try again in {remaining.Minutes} minutes and {remaining.Seconds} seconds.";
+            response.Result = ActionEvent.Failed;
+            return response;
         }
 
         var passwordMatches = BCrypt.Net.BCrypt.Verify(loginUser.Password, user.PasswordHash);
@@ -88,12 +103,12 @@ public class AuthService : IAuthService
         user.FailedLoginAttempts++;
         if (user.FailedLoginAttempts >= _authLockoutSettings.MaxFailedLoginAttempts)
         {
-            return null!;
-            //user.LockoutEnd = DateTime.Now.AddMinutes(_authLockoutSettings.LockoutDuration);
-            //user.LockoutEnabled = false;
-            // await _userRepository.UpdateAsync<User>(user);
+            user.LockoutEnd = DateTime.Now.AddMinutes(_authLockoutSettings.LockoutDuration);
+            user.LockoutEnabled = false;
+            await _userRepository.UpdateAsync<User>(user);
 
-            //return  $"Account locked due to many failed attempts. Try again after {LockoutSettings.LockoutMinutes} minutes.";
+            response.ErrorMessage =  $"Account locked due to many failed attempts. Try again after {_authLockoutSettings.LockoutDuration} minutes.";
+            return response;
         }
         return await _jwtTokenService.GenerateTokenResponseAsync(user);
     }
@@ -106,17 +121,22 @@ public class AuthService : IAuthService
     /// <exception cref="UnauthorizedAccessException">Invalid, expired or revoked refresh token</exception>
     public async Task<RefreshTokenResponse> RefreshTokenAsync(string token)
     {
+        var response = new RefreshTokenResponse();
         var tokenHash = ComputeTokenHash(token);
         var refreshToken = await _refreshTokenRepository.GetByTokenHashAsync(tokenHash);
         if (refreshToken is null)
         {
-            throw new UnauthorizedAccessException("Invalid or Expired access token...");
+            response.Result = ActionEvent.InvalidToken;
+            response.ErrorMessage = "Invalid or Expired access token...";
+            return response;
         }
         if (refreshToken.IsRevoked || refreshToken.ExpiresAt < DateTime.UtcNow)
         {
-            throw new UnauthorizedAccessException("Invalid or Expired access token...");
+            response.Result = ActionEvent.Revoked;
+            response.ErrorMessage = "Invalid or Expired access token...";
+            return response;
         }
-        var user = await _userRepository.GetByIdAsync(refreshToken.UserId);
+        var user = await _userRepository.GetByIdAsync<User>(refreshToken.UserId);
         if (user is null)
         {
             throw new UnauthorizedAccessException("User not found");
@@ -130,7 +150,7 @@ public class AuthService : IAuthService
 
     public async Task<UserInfo?> GetUserInfoAsync(string userId)
     {
-        var user = await _userRepository.GetByIdAsync(userId);
+        var user = await _userRepository.GetByIdAsync<User>(userId);
         if (user is null)
         {
             return null;

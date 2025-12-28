@@ -1,15 +1,22 @@
 ﻿
 using Domain.Entities;
 using Domain.Repositories.Base;
+using Infrastructure.Persistence;
+using System;
 using System.Linq.Expressions;
 
 namespace Infrastructure.Repositories.Base;
 
 public class Repository : IRepository
 {
-    public Task<bool> AddAsync<T>(T entity) where T : BaseEntity
+    protected readonly DatabaseContext DbContext;
+    public Repository(DatabaseContext dbContext)
     {
-        throw new NotImplementedException();
+        DbContext = dbContext;
+    }
+    public async Task<bool> AddAsync<T>(T entity) where T : BaseEntity
+    {
+        return await DbContext.AddAsync<T>(entity);
     }
 
     public Task<bool> DeleteAsync<T>(T entity) where T : BaseEntity
@@ -22,6 +29,11 @@ public class Repository : IRepository
         throw new NotImplementedException();
     }
 
+    public async Task<T?> GetByIdAsync<T>(string userId) where T : BaseEntity
+    {
+        return await DbContext.GetItemByConditionAsync<T>(u => u.Id == userId);
+    }
+
     public Task<T?> GetItemByConditionAsync<T>(Expression<Func<T, bool>> criteria) where T : BaseEntity
     {
         throw new NotImplementedException();
@@ -32,8 +44,8 @@ public class Repository : IRepository
         throw new NotImplementedException();
     }
 
-    public Task<bool> UpdateAsync<T>(T entity) where T : BaseEntity
+    public async Task<bool> UpdateAsync<T>(T entity) where T : BaseEntity
     {
-        throw new NotImplementedException();
+        return await DbContext.UpdateAsync<T>(entity);
     }
 }

@@ -15,13 +15,15 @@ Log.Logger = new LoggerConfiguration()
 // Use Serilog instead of default logger
 builder.Host.UseSerilog();
 
+builder.Services.AddConfigurationSettings(builder.Configuration);
 // Initialize Configuration Helper
 ConfigurationHelper.Initialize(builder.Configuration);
 builder.Services.AddAuditLogging();
-builder.Services.AddConfigurationSettings(builder.Configuration);
 builder.Services.AddRateLimitingServices();
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
+// swagger UI...
+builder.Services.AddSwaggerGen();
 
 builder.Services.AddJwtAuthentication();
 builder.Services.AddApplicationServices();
@@ -36,6 +38,9 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
     app.MapScalarApiReference(); // add Scalar.AspNetCore...
+    // Swagger UI...
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 
 // authentication & authorization middlewares...

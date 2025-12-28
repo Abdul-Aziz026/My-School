@@ -2,23 +2,23 @@
 using Application.Interfaces.Repositories;
 using Domain.Entities;
 using Infrastructure.Persistence;
+using Infrastructure.Repositories.Base;
 
 namespace Infrastructure.Repositories;
 
-public class UserRepository(DatabaseContext Context) : IUserRepository
+public class UserRepository : Repository, IUserRepository
 {
+    public UserRepository(DatabaseContext dbContext) : base(dbContext) {}
+
     public async Task AddAsync(User user)
     {
-        await Context.AddAsync<User>(user);
+        
     }
 
     public async Task<User?> GetByEmailAsync(string email)
     {
-        return await Context.GetItemByConditionAsync<User>(u => u.Email == email);
+        return await DbContext.GetItemByConditionAsync<User>(u => u.Email == email);
     }
 
-    public async Task<User?> GetByIdAsync(string userId)
-    {
-        return await Context.GetItemByConditionAsync<User>(u => u.Id == userId);
-    }
+    
 }

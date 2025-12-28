@@ -36,6 +36,7 @@ public class JwtTokenService : IJwtTokenService
         };
         return new RefreshTokenResponse
         {
+            Result = ActionEvent.Succeeded,
             AccessToken = accessToken,
             RefreshToken = refreshToken.TokenHash,
             AccessTokenExpiry = DateTime.UtcNow.AddMinutes(_jwtExpirationMinutes),

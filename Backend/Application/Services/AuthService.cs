@@ -45,7 +45,7 @@ public class AuthService : IAuthService
         if (user is not null)
         {
             response.Result = ActionEvent.Failed;
-            //return response;
+            return response;
         }
         // Hash the password with BCrypt
         var passwordHash = BCrypt.Net.BCrypt.HashPassword(registerUser.Password);
@@ -60,7 +60,7 @@ public class AuthService : IAuthService
             CreatedAt = DateTime.UtcNow
         };
 
-        //await _userRepository.AddAsync<User>(newUser);
+        await _userRepository.AddAsync<User>(newUser);
         await _emailService.SendEmailAsync(newUser.Email,
                                                newUser.UserName,
                                                "Register Successfully in My School",
@@ -197,10 +197,10 @@ public class AuthService : IAuthService
             user.PasswordResetExpiry = DateTime.UtcNow.AddMinutes(15); // Token valid for 15 minutes
 
             await _userRepository.UpdateAsync(user);
-            var frontendBase = $"http://codeforces.com";
+            var frontendBase = $"http://localhost:5000";
             var resetLink = string.IsNullOrWhiteSpace(frontendBase) ?
-                $"http://localhost:5000/reset-password?token={rawToken}&email={Uri.EscapeDataString(user.Email)}"
-                : $"{frontendBase}/reset-password?token={rawToken}&email={Uri.EscapeDataString(user.Email)}";
+                $"http://localhost:5000/api/auth/reset-password?token={rawToken}&email={Uri.EscapeDataString(user.Email)}"
+                : $"{frontendBase}/api/auth/reset-password?token={rawToken}&email={Uri.EscapeDataString(user.Email)}";
 
             var subject = "Reset your password";
             var body = $"<p>Click the link below to reset your password. This link is valid for 15 minutes.</p>" +
@@ -229,7 +229,7 @@ public class AuthService : IAuthService
         try
         {
             var user = await _userRepository.GetByEmailAsync(dto.Email);
-            if(user is null)
+            if(user is null || user.PasswordResetTokenHash != dto.Token)
             {
                 Console.WriteLine("ResetPassword attempted for non-existent email {Email}", dto.Email);
                 throw new InvalidOperationException("Invalid token or email."); // generic

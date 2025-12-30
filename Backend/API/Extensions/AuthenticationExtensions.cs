@@ -1,5 +1,4 @@
-﻿using Application.Authorization;
-using Infrastructure.Helper;
+﻿using Infrastructure.Helper;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 

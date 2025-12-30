@@ -1,4 +1,5 @@
-﻿using Application.Interfaces.Repositories;
+﻿using Application.Interfaces.Publisher;
+using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
 using Domain.Repositories.Base;
 using Infrastructure.Persistence;
@@ -26,6 +27,8 @@ public static class ServiceCollectionExtensions
 
         // Email Services...
         services.AddScoped<IEmailService, BrevoEmailService>();
+
+        services.AddScoped<IMessageBus, MessageBus>();
 
         return services;
     }

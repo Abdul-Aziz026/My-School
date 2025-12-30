@@ -14,7 +14,7 @@ public class DatabaseContext
         _logger = logger;
     }
 
-    public async Task<List<T>> GetAllAsync<T>() where T : BaseEntity
+    public async Task<List<T>> GetAllAsync<T>() where T : class
     {
         try {
             var collection = DatabaseContextClient.GetCollection<T>();

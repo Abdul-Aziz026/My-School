@@ -2,6 +2,7 @@
 using Domain.Entities;
 using Domain.Repositories.Base;
 using Infrastructure.Persistence;
+using SharpCompress.Common;
 using System;
 using System.Linq.Expressions;
 
@@ -24,9 +25,9 @@ public class Repository : IRepository
         throw new NotImplementedException();
     }
 
-    public Task<IReadOnlyList<T>> GetAllAsync<T>() where T : class
+    public async Task<List<T>> GetAllAsync<T>() where T : class
     {
-        throw new NotImplementedException();
+        return await DbContext.GetAllAsync<T>();
     }
 
     public async Task<T?> GetByIdAsync<T>(string userId) where T : BaseEntity

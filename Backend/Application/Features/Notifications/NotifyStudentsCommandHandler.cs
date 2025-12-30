@@ -7,7 +7,7 @@ using MediatR;
 
 namespace Application.Features.Notifications;
 
-public class NotifyStudentsCommandHandler : IRequestHandler<NotifyStudentsCommand, Unit>
+public class NotifyStudentsCommandHandler : IRequestHandler<NotifyStudentsCommand>
 {
     private readonly IUserRepository _userRepository;
     private readonly IMessageBus _messageBus;
@@ -17,7 +17,7 @@ public class NotifyStudentsCommandHandler : IRequestHandler<NotifyStudentsComman
         _userRepository = userRepository;
         _messageBus = messageBus;
     }
-    public async Task<Unit> Handle(NotifyStudentsCommand request, CancellationToken cancellationToken)
+    public async Task Handle(NotifyStudentsCommand request, CancellationToken cancellationToken)
     {
         var message = request.Message;
         var users = await _userRepository.GetAllAsync<User>();
@@ -27,11 +27,11 @@ public class NotifyStudentsCommandHandler : IRequestHandler<NotifyStudentsComman
             {
                 Name = user.UserName,
                 Email = user.Email,
-                Subject = "Notification",
+                Subject = "May Allah Guide & Bless You in 2026 🌙",
                 Body = message
             });
         }
-        return Unit.Value;
+        return;// Unit.Value;
 
     }
 }   

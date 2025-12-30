@@ -1,8 +1,9 @@
-﻿namespace Contracts.Commands;
+﻿using MediatR;
 
-using MediatR;
-
-public class NotifyStudentsCommand : IRequest<Unit>
+namespace Contracts.Commands
 {
-    public string Message { get; set; }
+    public class NotifyStudentsCommand : IRequest
+    {
+        public string Message { get; set; }
+    }
 }

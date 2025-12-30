@@ -1,7 +1,10 @@
-﻿using MediatR;
-using MassTransit;
-using Infrastructure.Services;
+﻿using Application.Features.Notifications;
 using Application.Interfaces.Services;
+using Infrastructure.Consumers;
+using Infrastructure.Services;
+using MassTransit;
+using MediatR;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace API.Extensions;
 
@@ -11,11 +14,14 @@ public static class MasstransitAndMediatRExtensions
     {
         services.AddMassTransit(x =>
         {
-            // Automatically scan and register all consumers
-            //x.AddConsumersFromNamespaceContaining<OrderCreatedConsumer>();
-
             // Apply kebab-case naming for endpoints
             x.SetKebabCaseEndpointNameFormatter();
+            // Automatically scan and register all consumers
+            x.AddConsumersFromNamespaceContaining<NotifyStudentConsumer>();
+
+            // register explicit consumer
+            //x.AddConsumer<NotifyStudentConsumer>();
+
             x.UsingRabbitMq((context, cfg) =>
             {
                 cfg.Host(configuration["RabbitMQ:Host"], h =>
@@ -27,8 +33,11 @@ public static class MasstransitAndMediatRExtensions
                 cfg.ConfigureEndpoints(context, new KebabCaseEndpointNameFormatter("MySchool", false));
             });
         });
-
-        services.AddMediatR(typeof(Program).Assembly);
+        services.AddMediatR(cfg =>
+        {
+            cfg.RegisterServicesFromAssembly(typeof(Program).Assembly);
+            cfg.RegisterServicesFromAssembly(typeof(NotifyStudentsCommandHandler).Assembly);
+        });
         return services;
     }
 }

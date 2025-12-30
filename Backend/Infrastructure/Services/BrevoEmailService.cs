@@ -17,7 +17,7 @@ public class BrevoEmailService : IEmailService
         _settings = settings.Value;
 
         Configuration.Default.ApiKey.Clear();
-        Configuration.Default.ApiKey.Add("api-key", _settings.ApiKey);
+        Configuration.Default.ApiKey["api-key"]= _settings.ApiKey;
         var config = new Configuration();
         config.ApiKey.Add("api-key", _settings.ApiKey);
 

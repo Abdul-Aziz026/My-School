@@ -20,7 +20,7 @@ public class NotificationController : ControllerBase
     public async Task<IActionResult> NotifyStudents([FromBody] NotifyStudentsCommand command)
     {
         // Send command through mediator
-        await _bus.SendAsync<NotifyStudentsCommand, Unit>(command);
+        await _bus.SendAsync<NotifyStudentsCommand>(command);
         return Ok("Command sent successfully");
     }
 }

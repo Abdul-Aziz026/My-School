@@ -19,7 +19,7 @@ builder.Services.AddConfigurationSettings(builder.Configuration);
 // Initialize Configuration Helper
 ConfigurationHelper.Initialize(builder.Configuration);
 builder.Services.AddAuditLogging();
-// register masstransit and medaitR
+builder.Services.AddMediatRAndMasstransit(builder.Configuration);
 builder.Services.AddRateLimitingServices();
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();

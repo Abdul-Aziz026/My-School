@@ -1,5 +1,17 @@
 ﻿using Application.DTOs;
-using Application.Interfaces.Services;
+using Application.Features.Auth.Commands.ForgotPassword;
+using Application.Features.Auth.Commands.Login;
+using Application.Features.Auth.Commands.Logout;
+using Application.Features.Auth.Commands.RefreshToken;
+using Application.Features.Auth.Commands.Register;
+using Application.Features.Auth.Commands.ResetPassword;
+using Application.Features.Auth.DTOs;
+using Application.Features.Auth.Queries.GetUser;
+using Application.Features.Users.Commands.UpdateUser;
+using Application.Helper;
+using Application.Interfaces.Publisher;
+using Domain.Entities;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using System.IdentityModel.Tokens.Jwt;
@@ -7,15 +19,14 @@ using System.Security.Claims;
 
 namespace API.Controllers;
 
-
 [ApiController]
 [Route("api/[controller]")]
 public class AuthController : Controller
 {
-    private readonly IAuthService _authService;
-    public AuthController(IAuthService authService)
+    private readonly IMessageBus _messageBus;
+    public AuthController(IMessageBus messageBus)
     {
-        _authService = authService;
+        _messageBus = messageBus;
     }
 
     [HttpPost("register")]
@@ -24,10 +35,12 @@ public class AuthController : Controller
     {
         try
         {
-            var tokenResponse = await _authService.RegisterAsync(user);
-            var userInfo = await _authService.GetUserInfoAsync(GetUserIdFromToken(tokenResponse.AccessToken));
+            var command = new RegisterUserCommand(user);
+            var tokenResponse = await _messageBus.SendAsync<RegisterUserCommand, RefreshTokenResponse>(command);
+            var getUserCommand = new GetUserByEmailQuery(TellMe.Email!);
+            var userInfo = await _messageBus.SendAsync<GetUserByEmailQuery, UserInfo>(getUserCommand);
 
-            var response = new AuthResponse
+            var response = new AuthResponse()
             {
                 Status = ResultStatus.Succeeded,
                 Token = tokenResponse.AccessToken,
@@ -53,15 +66,15 @@ public class AuthController : Controller
     [EnableRateLimiting("login")] // Apply rate limiting to login endpoint 5 attempts per 1 minute
     public async Task<ActionResult<AuthResponse>> Login(LoginDto user)
     {
-        var tokenResponse = await _authService.LoginAsync(user);
+        var command = new LoginUserCommand(user);
+        var tokenResponse = await _messageBus.SendAsync<LoginUserCommand, RefreshTokenResponse>(command);
 
         if (tokenResponse is null)
         {
             return Unauthorized(new { Error = "Invalid email or password" });
         }
-
-        var userInfo = await _authService.GetUserInfoAsync(GetUserIdFromToken(tokenResponse.AccessToken));
-
+        var getUserCommand = new GetUserByEmailQuery(TellMe.Email!);
+        var userInfo = await _messageBus.SendAsync<GetUserByEmailQuery, UserInfo>(getUserCommand);
         var response = new AuthResponse
         {
             Status = ResultStatus.Succeeded,
@@ -74,7 +87,6 @@ public class AuthController : Controller
         return Ok(response);
     }
 
-
     [HttpPost("refresh")]
     public async Task<ActionResult<AuthResponse>> Refresh()
     {
@@ -86,8 +98,10 @@ public class AuthController : Controller
         }
         try
         {
-            var tokenResponse = await _authService.RefreshTokenAsync(refreshToken);
-            var userInfo = await _authService.GetUserInfoAsync(GetUserIdFromToken(tokenResponse.AccessToken));
+            var command = new RenewUserTokensCommand(refreshToken);
+            var tokenResponse = await _messageBus.SendAsync<RenewUserTokensCommand, RefreshTokenResponse>(command);
+            var getUserCommand = new GetUserByEmailQuery(TellMe.Email!);
+            var userInfo = await _messageBus.SendAsync<GetUserByEmailQuery, UserInfo>(getUserCommand);
 
             var response = new AuthResponse
             {
@@ -107,30 +121,39 @@ public class AuthController : Controller
             return Unauthorized(new { Error = ex.Message });
         }
     }
+
+    [Authorize]
+    [HttpPut("updateProfile")]
+    public async Task<IActionResult> UpdateProfile(UpdateUserProfileDto user)
+    {
+        var command = new UpdateUserCommand(user);
+        command.UserId = TellMe.UserId ?? throw new UnauthorizedAccessException("User is not authenticated.");
+        await _messageBus.SendAsync<UpdateUserCommand>(command);
+        return Ok("Update profile Successfully.");
+    }
+
     [HttpPost("logout")]
-    //[Authorize] // Require authentication
+    //[Authorize]
     public async Task<IActionResult> Logout()
     {
         var refreshToken = Request.Cookies["refreshToken"];
-
-        if (!string.IsNullOrEmpty(refreshToken))
-        {
-            await _authService.RevokeRefreshTokenAsync(refreshToken);
-        }
-
+        var command = new LogoutUserCommand(refreshToken!);
+        await _messageBus.SendAsync<LogoutUserCommand>(command);
+        // Secure cookie deletion
         Response.Cookies.Delete("refreshToken", new CookieOptions
         {
             HttpOnly = true,
-            Secure = true, // Use true in production
+            Secure = true,     // must be true in production
             SameSite = SameSiteMode.Strict,
             Path = "/"
         });
 
-        return Ok(new { Message = "Logged out successfully" });
+        return Ok(new { message = "Logged out successfully" });
     }
+
     [EnableRateLimiting("api")]
     //[Authorize]
-    [HttpGet("me")]
+    [HttpGet("profile")]
     public async Task<ActionResult<UserInfo>> Me()
     {
         var userId = GetUserIdFromClaims(User);
@@ -139,7 +162,8 @@ public class AuthController : Controller
             return Unauthorized(new { Error = "Invalid token or user id not found" });
         }
 
-        var userInfo = await _authService.GetUserInfoAsync(userId);
+        var getUserCommand = new GetUserByEmailQuery(TellMe.Email!);
+        var userInfo = await _messageBus.SendAsync<GetUserByEmailQuery, UserInfo>(getUserCommand);
         if (userInfo is null)
         {
             return NotFound(new { Error = "User not found" });
@@ -151,24 +175,17 @@ public class AuthController : Controller
     [HttpPost("forgot-password")]
     public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto dto)
     {
-        // Idempotent: always return 200 to avoid user enumeration
-        await _authService.ForgotPasswordAsync(dto);
+        var command = new ForgotPasswordCommand(dto);
+        await _messageBus.SendAsync<ForgotPasswordCommand>(command);
         return Ok(new { Message = "If the account exists, a password reset email has been sent." });
     }
 
     [HttpPost("reset-password")]
     public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto dto)
     {
-        try
-        {
-            await _authService.ResetPasswordAsync(dto);
-            return Ok(new { Message = "Password has been reset successfully." });
-        }
-        catch (InvalidOperationException ex)
-        {
-            // Generic message to caller
-            return BadRequest(new { Error = ex.Message });
-        }
+        var command = new ResetPasswordCommand(dto);
+        await _messageBus.SendAsync<ResetPasswordCommand>(command);
+        return Ok(new { Message = "Password has been reset successfully." });
     }
 
     private async Task SetRefreshTokenInCookie(string refreshToken, DateTime refreshTokenExpiry)
@@ -185,12 +202,11 @@ public class AuthController : Controller
         Response.Cookies.Append("refreshToken", refreshToken, cookieOptions);
     }
 
-    private string GetUserIdFromToken(string token)
+    private string GetUserIdFromToken(string token) 
     {
         var handler = new JwtSecurityTokenHandler();
         var jwtToken = handler.ReadJwtToken(token);
         return jwtToken.Subject;
-        // jwtToken.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Sub)?.Value // ✅ Also reads "sub"
     }
 
     private static string? GetUserIdFromClaims(ClaimsPrincipal user)

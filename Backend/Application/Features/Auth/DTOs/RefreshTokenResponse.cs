@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Application.DTOs;
+namespace Application.Features.Auth.DTOs;
 
 public class RefreshTokenResponse
 {

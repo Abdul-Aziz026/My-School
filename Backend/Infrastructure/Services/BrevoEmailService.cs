@@ -1,5 +1,6 @@
 ﻿using Application.Interfaces.Services;
 using Application.Settings;
+using Contracts.Events;
 using Microsoft.Extensions.Options;
 using sib_api_v3_sdk.Api;
 using sib_api_v3_sdk.Client;
@@ -54,35 +55,31 @@ public class BrevoEmailService : IEmailService
         }
     }
 
-    public async Task<bool> SendEmailWithAttachmentAsync(
-        string toMail, string toName, string subject,
-        string htmlContent, byte[] attachment, string attachmentName)
+    public async Task<bool> SendEmailAsync(SendEmailCommand command)
     {
         try
         {
             var sender = new SendSmtpEmailSender(_settings.SenderName, _settings.SenderEmail);
-            var receiver = new SendSmtpEmailTo(toMail, toName);
-
-            var attachmentContent = new SendSmtpEmailAttachment(
-                content: attachment,
-                name: attachmentName
+            var receiver = new SendSmtpEmailTo(command.ToMail, command.Name);
+            var attachment = new SendSmtpEmailAttachment(
+                content: command?.Attachment,
+                name: command?.AttachmentName
             );
 
             var sendSmtpEmail = new SendSmtpEmail(
                 sender: sender,
                 to: new List<SendSmtpEmailTo> { receiver },
-                htmlContent: htmlContent,
-                subject: subject,
-                attachment: new List<SendSmtpEmailAttachment> { attachmentContent }
+                htmlContent: command?.Body,
+                subject: command?.Subject,
+                attachment: new List<SendSmtpEmailAttachment> { attachment }
             );
-
             var result = await _apiInstance.SendTransacEmailAsync(sendSmtpEmail);
-            Console.WriteLine($"Brevo email sent to {toMail}. Response id: {result?.MessageId}");
+            Console.WriteLine($"Brevo email sent to {command.ToMail}. Response id: {result?.MessageId}");
             return result is not null;
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error sending email with attachment: {ex.Message}");
+            Console.WriteLine($"Error sending email: {ex.Message}");
             return false;
         }
     }

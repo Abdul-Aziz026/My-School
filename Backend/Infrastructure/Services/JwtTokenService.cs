@@ -1,4 +1,4 @@
-﻿using Application.DTOs;
+﻿using Application.Features.Auth.DTOs;
 using Application.Interfaces.Services;
 using Domain.Entities;
 using Infrastructure.Helper;

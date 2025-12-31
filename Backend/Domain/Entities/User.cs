@@ -8,6 +8,7 @@ public class User : BaseEntity
     public string UserName { get; set; } = string.Empty;
     public string PhoneNumber { get; set; } = string.Empty;
     public string ProfilePicture { get; set; } = string.Empty;
+    public string Address {  get; set; } = string.Empty;
     public List<string> Roles { get; set; } = new();
     public List<string> Permissions { get; set; } = new();
     public bool IsActive { get; set; } = true;

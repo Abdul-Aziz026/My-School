@@ -1,10 +1,12 @@
-﻿namespace Application.Interfaces.Publisher;
+﻿using MediatR;
+
+namespace Application.Interfaces.Publisher;
 
 public interface IMessageBus
 {
-    // For in-process commands
-    Task SendAsync<TRequest>(TRequest command) where TRequest : class;
+    Task SendAsync<TCommand>(TCommand command) where TCommand : IRequest;
 
-    // For async events
+    Task<TResponse> SendAsync<TCommand, TResponse>(TCommand command) where TCommand : IRequest<TResponse>
+                                                                     where TResponse : class;
     Task PublishAsync<T>(T command) where T: class;
 }

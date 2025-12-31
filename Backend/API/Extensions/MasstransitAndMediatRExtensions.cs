@@ -1,4 +1,4 @@
-﻿using Application.Features.Notifications;
+﻿using Application.Features.Users.Commands.CreateUser;
 using Application.Interfaces.Services;
 using Infrastructure.Consumers;
 using Infrastructure.Services;
@@ -36,7 +36,7 @@ public static class MasstransitAndMediatRExtensions
         services.AddMediatR(cfg =>
         {
             cfg.RegisterServicesFromAssembly(typeof(Program).Assembly);
-            cfg.RegisterServicesFromAssembly(typeof(NotifyStudentsCommandHandler).Assembly);
+            cfg.RegisterServicesFromAssembly(typeof(CreateUserCommandHandler).Assembly);
         });
         return services;
     }

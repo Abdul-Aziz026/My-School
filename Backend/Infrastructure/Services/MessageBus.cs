@@ -15,21 +15,23 @@ public class MessageBus : IMessageBus
         _mediator = mediator;
     }
 
-    // Send command in-process via MediatR
-    public async Task SendAsync<TRequest>(TRequest command) where TRequest : class
-    {
-        if (command == null)
-            throw new ArgumentNullException(nameof(command));
-
-        await _mediator.Send(command);
-    }
-
-    // Publish event asynchronously via MassTransit
     public async Task PublishAsync<T>(T command) where T : class
     {
         if (command is null)
             throw new ArgumentNullException();
 
         await _publishEndpoint.Publish(command);
+    }
+
+    public async Task<TResponse> SendAsync<TRequest, TResponse>(TRequest command)
+        where TRequest : IRequest<TResponse>
+        where TResponse : class
+    {
+        return await _mediator.Send(command);
+    }
+
+    public async Task SendAsync<TCommand>(TCommand command) where TCommand : IRequest
+    {
+        await _mediator.Send(command);
     }
 }

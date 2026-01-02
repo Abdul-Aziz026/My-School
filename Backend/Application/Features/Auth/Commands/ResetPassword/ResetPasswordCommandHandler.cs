@@ -1,5 +1,5 @@
-﻿using Application.Interfaces.Publisher;
-using Application.Interfaces.Repositories;
+﻿using Application.Common.Interfaces.Publisher;
+using Application.Common.Interfaces.Repositories;
 using Contracts.Events;
 using MediatR;
 using Microsoft.Extensions.Logging;

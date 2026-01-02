@@ -1,7 +1,7 @@
 ﻿using Application.Features.Auth.DTOs;
 using Domain.Entities;
 
-namespace Application.Interfaces.Services;
+namespace Application.Common.Interfaces.Services;
 
 public interface IJwtTokenService
 {

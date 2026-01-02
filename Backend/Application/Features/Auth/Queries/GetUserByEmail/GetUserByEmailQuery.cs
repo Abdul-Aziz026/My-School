@@ -1,4 +1,4 @@
-﻿using Application.DTOs;
+﻿using Application.Features.Auth.DTOs;
 using Domain.Entities;
 using MediatR;
 

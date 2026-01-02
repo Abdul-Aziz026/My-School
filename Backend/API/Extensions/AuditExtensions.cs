@@ -1,4 +1,4 @@
-﻿using Application.Interfaces.Services;
+﻿using Application.Common.Interfaces.Services;
 using Infrastructure.Services;
 
 namespace API.Extensions;

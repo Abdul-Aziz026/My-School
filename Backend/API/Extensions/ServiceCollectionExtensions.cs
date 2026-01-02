@@ -1,6 +1,6 @@
-﻿using Application.Interfaces.Publisher;
-using Application.Interfaces.Repositories;
-using Application.Interfaces.Services;
+﻿using Application.Common.Interfaces.Publisher;
+using Application.Common.Interfaces.Repositories;
+using Application.Common.Interfaces.Services;
 using Domain.Repositories.Base;
 using Infrastructure.Persistence;
 using Infrastructure.Repositories;

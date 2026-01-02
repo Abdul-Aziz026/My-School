@@ -1,4 +1,4 @@
-﻿using Application.Helper;
+﻿using Application.Common.Helper;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using System;

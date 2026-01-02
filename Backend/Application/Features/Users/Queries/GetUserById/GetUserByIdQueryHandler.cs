@@ -1,6 +1,6 @@
-﻿using Application.DTOs;
+﻿using Application.Common.Interfaces.Repositories;
+using Application.Features.Auth.DTOs;
 using Application.Features.Auth.Queries.GetUser;
-using Application.Interfaces.Repositories;
 using Domain.Entities;
 using MediatR;
 
@@ -19,7 +19,7 @@ public class GetUserByIdQueryHandler : IRequestHandler<GetUserByIdQuery, UserInf
         var user = await _userRepository.GetByIdAsync<User>(email);
         if (user is null)
         {
-            return null;
+            return null!;
         }
         return new UserInfo
         {

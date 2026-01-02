@@ -1,6 +1,6 @@
-﻿using Application.Features.Auth.DTOs;
-using Application.Interfaces.Repositories;
-using Application.Interfaces.Services;
+﻿using Application.Common.Interfaces.Repositories;
+using Application.Common.Interfaces.Services;
+using Application.Features.Auth.DTOs;
 using Application.Settings;
 using Domain.Entities;
 using MediatR;
@@ -50,7 +50,7 @@ public class LoginUserCommandHandler : IRequestHandler<LoginUserCommand, Refresh
         var passwordMatches = BCrypt.Net.BCrypt.Verify(loginUser.Password, user.PasswordHash);
         if (!passwordMatches)
         {
-            return null;
+            return null!;
         }
         user.FailedLoginAttempts++;
         if (user.FailedLoginAttempts >= _authLockoutSettings.MaxFailedLoginAttempts)

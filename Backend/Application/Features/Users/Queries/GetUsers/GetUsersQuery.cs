@@ -6,8 +6,10 @@ namespace Application.Features.Users.Queries.GetUsers;
 
 public class GetUsersQuery : IRequest<PagedResult<UserDto>>
 {
-    public string? Role { get; set; }
-    public string? Search { get; set; }
+    public string Role { get; set; } = string.Empty;
+    public string Search { get; set; } = string.Empty;
+    public string OrderBy { get; set; } = string.Empty;
+    public bool IsAscending { get; set; }
     public bool? IsActive { get; set; }
     public int Page { get; set; } = 1;
     public int PageSize { get; set; } = 10;

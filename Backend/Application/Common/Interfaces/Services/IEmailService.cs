@@ -1,7 +1,7 @@
 ﻿using Contracts.Events;
 using System;
 
-namespace Application.Interfaces.Services;
+namespace Application.Common.Interfaces.Services;
 
 public interface IEmailService
 {

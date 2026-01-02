@@ -1,7 +1,7 @@
 ﻿using Domain.Entities;
 using Domain.Enums;
 
-namespace Application.Interfaces.Services;
+namespace Application.Common.Interfaces.Services;
 
 public interface IAuditService
 {

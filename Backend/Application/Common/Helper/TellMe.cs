@@ -1,6 +1,6 @@
 ﻿using System.Threading;
 
-namespace Application.Helper;
+namespace Application.Common.Helper;
 
 public static class TellMe
 {

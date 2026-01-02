@@ -1,12 +1,12 @@
 ﻿
 using Application.Features.Auth.DTOs;
-using Application.Helper;
-using Application.Interfaces.Publisher;
-using Application.Interfaces.Repositories;
-using Application.Interfaces.Services;
 using Contracts.Events;
 using MediatR;
 using Domain.Entities;
+using Application.Common.Interfaces.Publisher;
+using Application.Common.Interfaces.Repositories;
+using Application.Common.Interfaces.Services;
+using Application.Common.Helper;
 
 namespace Application.Features.Auth.Commands.Register;
 

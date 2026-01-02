@@ -1,10 +1,6 @@
 ﻿using Application.Features.Users.Commands.CreateUser;
-using Application.Interfaces.Services;
 using Infrastructure.Consumers;
-using Infrastructure.Services;
 using MassTransit;
-using MediatR;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace API.Extensions;
 

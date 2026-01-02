@@ -1,10 +1,6 @@
-﻿using Application.Features.Auth.DTOs;
-using Application.Helper;
-using Application.Interfaces.Repositories;
+﻿using Application.Common.Interfaces.Repositories;
+using Application.Features.Auth.DTOs;
 using Domain.Entities;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Application.Features.Users.Commands.UpdateUser;
 

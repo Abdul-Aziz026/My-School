@@ -1,6 +1,5 @@
 ﻿
-using Application.Interfaces.Repositories;
-using Application.Interfaces.Services;
+using Application.Common.Interfaces.Repositories;
 using MediatR;
 
 namespace Application.Features.Auth.Commands.Logout;

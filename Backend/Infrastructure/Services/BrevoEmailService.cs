@@ -1,4 +1,4 @@
-﻿using Application.Interfaces.Services;
+﻿using Application.Common.Interfaces.Services;
 using Application.Settings;
 using Contracts.Events;
 using Microsoft.Extensions.Options;
@@ -74,7 +74,7 @@ public class BrevoEmailService : IEmailService
                 attachment: new List<SendSmtpEmailAttachment> { attachment }
             );
             var result = await _apiInstance.SendTransacEmailAsync(sendSmtpEmail);
-            Console.WriteLine($"Brevo email sent to {command.ToMail}. Response id: {result?.MessageId}");
+            Console.WriteLine($"Brevo email sent to {command?.ToMail}. Response id: {result?.MessageId}");
             return result is not null;
         }
         catch (Exception ex)

@@ -1,7 +1,7 @@
 ﻿using Domain.Enums;
 using Domain.Entities;
 using Infrastructure.Persistence;
-using Application.Interfaces.Services;
+using Application.Common.Interfaces.Services;
 
 namespace Infrastructure.Services;
 

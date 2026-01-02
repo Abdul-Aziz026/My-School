@@ -1,5 +1,4 @@
-﻿
-using Application.DTOs;
+﻿using Application.Features.Auth.DTOs;
 using MediatR;
 
 namespace Application.Features.Users.Queries.GetUserById;

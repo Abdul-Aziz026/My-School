@@ -1,4 +1,4 @@
-﻿using Application.Interfaces.Publisher;
+﻿using Application.Common.Interfaces.Publisher;
 using MassTransit;
 using MediatR;
 

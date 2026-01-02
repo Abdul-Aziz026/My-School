@@ -1,5 +1,5 @@
-﻿using Application.Features.Users.Commands.CreateUser;
-using Application.Interfaces.Repositories;
+﻿using Application.Common.Interfaces.Repositories;
+using Application.Features.Users.Commands.CreateUser;
 using Domain.Entities;
 using MediatR;
 

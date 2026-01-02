@@ -1,4 +1,5 @@
-﻿using Application.DTOs;
+﻿using Application.Common.Interfaces.Publisher;
+using Application.Features.Auth.DTOs;
 using Application.Features.Auth.Queries.GetUser;
 using Application.Features.Common.Models;
 using Application.Features.Users.Commands.CreateUser;
@@ -6,8 +7,6 @@ using Application.Features.Users.Commands.DeleteUser;
 using Application.Features.Users.Commands.UpdateUser;
 using Application.Features.Users.Queries.GetUserById;
 using Application.Features.Users.Queries.GetUsers;
-using Application.Interfaces.Publisher;
-using Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -27,8 +26,8 @@ public class UsersController : Controller
 
     // GET /api/users?role=Admin&page=1&pageSize=10&search=john
     [HttpGet]
-    [Authorize(Roles = "Admin")] // Only admin can list users
-    public async Task<IActionResult> GetUsers(GetUsersQuery query)
+    //[Authorize(Roles = "Admin")] // Only admin can list users
+    public async Task<IActionResult> GetUsers([FromQuery] GetUsersQuery query)
     {
         var users = await _messageBus.SendAsync<GetUsersQuery, PagedResult<UserDto>>(query);
         return Ok(users);

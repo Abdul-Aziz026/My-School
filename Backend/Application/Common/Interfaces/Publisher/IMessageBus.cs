@@ -1,6 +1,6 @@
 ﻿using MediatR;
 
-namespace Application.Interfaces.Publisher;
+namespace Application.Common.Interfaces.Publisher;
 
 public interface IMessageBus
 {

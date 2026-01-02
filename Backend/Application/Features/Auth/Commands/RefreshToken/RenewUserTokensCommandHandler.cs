@@ -1,7 +1,7 @@
 ﻿
+using Application.Common.Interfaces.Repositories;
+using Application.Common.Interfaces.Services;
 using Application.Features.Auth.DTOs;
-using Application.Interfaces.Repositories;
-using Application.Interfaces.Services;
 using Domain.Entities;
 using MediatR;
 using System.Security.Cryptography;

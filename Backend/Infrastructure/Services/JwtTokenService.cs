@@ -1,5 +1,5 @@
-﻿using Application.Features.Auth.DTOs;
-using Application.Interfaces.Services;
+﻿using Application.Common.Interfaces.Services;
+using Application.Features.Auth.DTOs;
 using Domain.Entities;
 using Infrastructure.Helper;
 using Infrastructure.Persistence;

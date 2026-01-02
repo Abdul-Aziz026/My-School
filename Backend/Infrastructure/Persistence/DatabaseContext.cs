@@ -1,8 +1,10 @@
-﻿using Application.Interfaces;
+﻿
 using Domain.Entities;
+using MassTransit;
 using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
 using System.Linq.Expressions;
+using System.Threading;
 
 namespace Infrastructure.Persistence;
 
@@ -16,7 +18,8 @@ public class DatabaseContext
 
     public async Task<List<T>> GetAllAsync<T>() where T : class
     {
-        try {
+        try
+        {
             var collection = DatabaseContextClient.GetCollection<T>();
             var response = await collection.Find(_ => true).ToListAsync();
             _logger.LogInformation($"Retrieved all entities of type {typeof(T).FullName}, count: {response.Count}");
@@ -124,5 +127,39 @@ public class DatabaseContext
             .Find(filter)
             .ToListAsync();   // fetch all matching documents
         return results;
+    }
+    
+    public async Task<long> CountAsync<T>(Expression<Func<T, bool>> criteria) where T : class
+    {
+        var collection = DatabaseContextClient.GetCollection<T>();
+        var filter = Builders<T>.Filter.Where(criteria);
+        return await collection.CountDocumentsAsync(filter);
+    }
+
+    public async Task<List<T>> GetPagedResponseAsync<T>(Expression<Func<T, bool>>? criteria = null,
+                                                 int pageNumber = 1,
+                                                 int pageSize = 10,
+                                                 Expression<Func<T, object>>? orderBy = null,
+                                                 bool ascending = true)
+    {
+        var collection = DatabaseContextClient.GetCollection<T>();
+        var filter = criteria != null ? Builders<T>.Filter.Where(criteria) : Builders<T>.Filter.Empty;
+
+        var query = collection.Find(filter);
+
+        if (orderBy != null)
+        {
+            var sortDefinition = ascending
+                ? Builders<T>.Sort.Ascending(orderBy)
+                : Builders<T>.Sort.Descending(orderBy);
+
+            query = query.Sort(sortDefinition);
+        }
+        var items = await query
+            .Skip((pageNumber - 1) * pageSize)
+            .Limit(pageSize)
+            .ToListAsync();
+
+        return items;
     }
 }

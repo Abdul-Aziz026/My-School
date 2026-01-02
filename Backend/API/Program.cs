@@ -20,6 +20,7 @@ builder.Services.AddConfigurationSettings(builder.Configuration);
 ConfigurationHelper.Initialize(builder.Configuration);
 builder.Services.AddAuditLogging();
 builder.Services.AddMediatRAndMasstransit(builder.Configuration);
+builder.Services.AddRedis(builder.Configuration);
 builder.Services.AddRateLimitingServices();
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();

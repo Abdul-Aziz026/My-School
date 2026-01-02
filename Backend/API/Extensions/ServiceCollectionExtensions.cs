@@ -21,12 +21,17 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 
+        // register JWT token service
         services.AddScoped<IJwtTokenService, JwtTokenService>();
 
         // Email Services...
         services.AddScoped<IEmailService, BrevoEmailService>();
 
+        // Message Bus for sending commands/events through(MediatR & RabbitMQ)
         services.AddScoped<IMessageBus, MessageBus>();
+
+        // register cache service
+        services.AddScoped<ICacheService, CacheService>();
 
         return services;
     }

@@ -5,6 +5,7 @@ using Application.Features.Common.Models;
 using Application.Features.Users.Commands.CreateUser;
 using Application.Features.Users.Commands.DeleteUser;
 using Application.Features.Users.Commands.UpdateUser;
+using Application.Features.Users.DTOs;
 using Application.Features.Users.Queries.GetUserById;
 using Application.Features.Users.Queries.GetUsers;
 using Microsoft.AspNetCore.Authorization;
@@ -27,15 +28,16 @@ public class UsersController : Controller
     // GET /api/users?role=Admin&page=1&pageSize=10&search=john
     [HttpGet]
     //[Authorize(Roles = "Admin")] // Only admin can list users
-    public async Task<IActionResult> GetUsers([FromQuery] GetUsersQuery query)
+    public async Task<IActionResult> GetUsers([FromQuery] GetUsersQueryDtoRequest request)
     {
-        var users = await _messageBus.SendAsync<GetUsersQuery, PagedResult<UserDto>>(query);
+        var getUsersQuery = request.ToUserQuery();
+        var users = await _messageBus.SendAsync<GetUsersQuery, PagedResult<UserDtoResponse>>(getUsersQuery);
         return Ok(users);
     }
 
     // GET /api/users/{id}
     [HttpGet("{id:guid}")]
-    [Authorize(Roles = "Admin")] // Admin or self-check can be implemented
+    //[Authorize(Roles = "Admin")] // Admin or self-check can be implemented
     public async Task<IActionResult> GetUserById(string id)
     {
         var command = new GetUserByIdQuery(id);
@@ -45,26 +47,27 @@ public class UsersController : Controller
 
     // POST /api/users
     [HttpPost]
-    [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> CreateUser(CreateUserCommand command)
+    //[Authorize(Roles = "Admin")]
+    public async Task<ActionResult<CreateUserDtoResponse>> CreateUser(CreateUserDtoRequest request)
     {
-        var createdUser = await _messageBus.SendAsync<CreateUserCommand, CreateUserResponse>(command);
+        var command = request.ToCreateUserCommand();
+        var createdUser = await _messageBus.SendAsync<CreateUserCommand, CreateUserDtoResponse>(command);
         return Ok(createdUser);
     }
 
     // PUT /api/users/{id}
     [HttpPut("{id:guid}")]
-    [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> UpdateUser(string id, UpdateUserCommand command)
+    //[Authorize(Roles = "Admin")]
+    public async Task<IActionResult> UpdateUser(string id, UpdateUserDtoRequest request)
     {
-        command.UserId = id;
+        var command = request.ToUpdateUserCommand(id);
         await _messageBus.SendAsync<UpdateUserCommand>(command);
         return Ok(new { message = "User updated successfully" });
     }
 
     // DELETE /api/users/{id} (soft delete)
     [HttpDelete("{id:guid}")]
-    [Authorize(Roles = "Admin")]
+    //[Authorize(Roles = "Admin")]
     public async Task<IActionResult> DeleteUser(string id)
     {
         var command = new DeleteUserCommand(id);

@@ -1,11 +1,12 @@
 ﻿using Application.Common.Interfaces.Repositories;
 using Application.Features.Users.Commands.CreateUser;
+using Application.Features.Users.DTOs;
 using Domain.Entities;
 using MediatR;
 
 namespace Application.Features.Users.Commands.CreateUser;
 
-public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, CreateUserResponse>
+public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, CreateUserDtoResponse>
 {
     private readonly IUserRepository _userRepository;
 
@@ -14,7 +15,7 @@ public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, Creat
         _userRepository = userRepository;
     }
 
-    public async Task<CreateUserResponse> Handle(CreateUserCommand request, CancellationToken cancellationToken)
+    public async Task<CreateUserDtoResponse> Handle(CreateUserCommand request, CancellationToken cancellationToken)
     {
         try
         {
@@ -43,14 +44,15 @@ public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, Creat
 
             await _userRepository.AddAsync<User>(newUser);
 
-            return new CreateUserResponse
+            return new CreateUserDtoResponse
             {
                 Id = newUser.Id,
                 Email = newUser.Email,
                 UserName = newUser.UserName,
                 Roles = newUser.Roles,
                 IsActive = newUser.IsActive,
-                CreatedAt = newUser.CreatedAt
+                CreatedAt = newUser.CreatedAt,
+                PhoneNumber = newUser.PhoneNumber
             };
         }
         catch (Exception ex)

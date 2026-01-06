@@ -120,15 +120,6 @@ public class AuthController : Controller
         }
     }
 
-    [Authorize]
-    [HttpPut("updateProfile")]
-    public async Task<IActionResult> UpdateProfile(UpdateUserProfileDto user)
-    {
-        var command = new UpdateUserCommand(user);
-        command.UserId = TellMe.UserId ?? throw new UnauthorizedAccessException("User is not authenticated.");
-        await _messageBus.SendAsync<UpdateUserCommand>(command);
-        return Ok("Update profile Successfully.");
-    }
 
     [HttpPost("logout")]
     //[Authorize]

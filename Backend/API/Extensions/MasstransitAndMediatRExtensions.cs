@@ -31,7 +31,7 @@ public static class MasstransitAndMediatRExtensions
         });
         services.AddMediatR(cfg =>
         {
-            cfg.RegisterServicesFromAssembly(typeof(Program).Assembly);
+            //cfg.RegisterServicesFromAssembly(typeof(Program).Assembly);
             cfg.RegisterServicesFromAssembly(typeof(CreateUserCommandHandler).Assembly);
         });
         return services;

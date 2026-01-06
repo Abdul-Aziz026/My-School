@@ -1,4 +1,5 @@
-﻿using Application.Common.Interfaces.Publisher;
+﻿using Application.Common.Interfaces.Persistence;
+using Application.Common.Interfaces.Publisher;
 using Application.Common.Interfaces.Repositories;
 using Application.Common.Interfaces.Services;
 using Domain.Repositories.Base;
@@ -13,7 +14,8 @@ public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddApplicationServices(this IServiceCollection services)
     {
-        // Database adapter (keeps repository layer abstracted from driver)
+        // Database 
+        services.AddScoped<IMongoContext, MongoContext>();
         services.AddScoped<DatabaseContext>();
 
         // Repositories

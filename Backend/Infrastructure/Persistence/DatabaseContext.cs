@@ -1,4 +1,5 @@
 ﻿
+using Application.Common.Interfaces.Persistence;
 using Domain.Entities;
 using MassTransit;
 using Microsoft.Extensions.Logging;
@@ -10,17 +11,19 @@ namespace Infrastructure.Persistence;
 
 public class DatabaseContext
 {
+    private readonly IMongoContext _context;
     private readonly ILogger<DatabaseContext> _logger;
-    public DatabaseContext(ILogger<DatabaseContext> logger)
+    public DatabaseContext(IMongoContext context, ILogger<DatabaseContext> logger)
     {
         _logger = logger;
+        _context = context;
     }
 
     public async Task<List<T>> GetAllAsync<T>() where T : class
     {
         try
         {
-            var collection = DatabaseContextClient.GetCollection<T>();
+            var collection = _context.GetCollection<T>();
             var response = await collection.Find(_ => true).ToListAsync();
             _logger.LogInformation($"Retrieved all entities of type {typeof(T).FullName}, count: {response.Count}");
             return response;
@@ -36,7 +39,7 @@ public class DatabaseContext
     {
         try
         {
-            var collection = DatabaseContextClient.GetCollection<T>();
+            var collection = _context.GetCollection<T>();
             await collection.InsertOneAsync(entity);
             _logger.LogInformation($"Added entity of type {typeof(T).FullName} with Id {entity.Id}");
             return true;
@@ -52,7 +55,7 @@ public class DatabaseContext
     {
         try
         {
-            var collection = DatabaseContextClient.GetCollection<T>();
+            var collection = _context.GetCollection<T>();
             var result = await collection.ReplaceOneAsync(o => o.Id.Equals(entity.Id), entity);
             var success = result.IsAcknowledged && result.ModifiedCount > 0;
             if (success)
@@ -77,7 +80,7 @@ public class DatabaseContext
     {
         try
         {
-            var collection = DatabaseContextClient.GetCollection<T>();
+            var collection = _context.GetCollection<T>();
             await collection.DeleteOneAsync(o => o.Id.Equals(entity.Id));
             _logger.LogInformation($"Deleted entity of type {typeof(T).FullName} with Id {entity.Id}");
             return true;
@@ -93,7 +96,7 @@ public class DatabaseContext
     {
         try
         {
-            var collection = DatabaseContextClient.GetCollection<T>();
+            var collection = _context.GetCollection<T>();
             var ids = entities.Select(e => e.Id);
             var result = await collection.DeleteManyAsync(
                 Builders<T>.Filter.In(x => x.Id, ids)
@@ -113,7 +116,7 @@ public class DatabaseContext
 
     public async Task<T?> GetItemByConditionAsync<T>(Expression<Func<T, bool>> criteria) where T : BaseEntity
     {
-        var collection = DatabaseContextClient.GetCollection<T>();
+        var collection = _context.GetCollection<T>();
         var filter = Builders<T>.Filter.Where(criteria);
         var response = await collection.Find(filter).FirstOrDefaultAsync();
         return response;
@@ -121,7 +124,7 @@ public class DatabaseContext
 
     public async Task<List<T>?> GetItemsByConditionAsync<T>(Expression<Func<T, bool>> criteria) where T : BaseEntity
     {
-        var collection = DatabaseContextClient.GetCollection<T>();
+        var collection = _context.GetCollection<T>();
         var filter = Builders<T>.Filter.Where(criteria);
         var results = await collection
             .Find(filter)
@@ -131,7 +134,7 @@ public class DatabaseContext
     
     public async Task<long> CountAsync<T>(Expression<Func<T, bool>> criteria) where T : class
     {
-        var collection = DatabaseContextClient.GetCollection<T>();
+        var collection = _context.GetCollection<T>();
         var filter = Builders<T>.Filter.Where(criteria);
         return await collection.CountDocumentsAsync(filter);
     }
@@ -142,7 +145,7 @@ public class DatabaseContext
                                                  Expression<Func<T, object>>? orderBy = null,
                                                  bool ascending = true)
     {
-        var collection = DatabaseContextClient.GetCollection<T>();
+        var collection = _context.GetCollection<T>();
         var filter = criteria != null ? Builders<T>.Filter.Where(criteria) : Builders<T>.Filter.Empty;
 
         var query = collection.Find(filter);

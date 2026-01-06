@@ -14,7 +14,7 @@ public class UpdateUserCommandHandler
 
     public async Task Handle(UpdateUserCommand request, CancellationToken cancellationToken)
     {
-        var updatedUser = request.UpdateUserProfileDto;
+        var updatedUser = request;
         var currentUserId = request.UserId ?? throw new UnauthorizedAccessException("User is not authenticated.");
         var user = await _userRepository.GetByIdAsync<User>(currentUserId) ?? throw new UnauthorizedAccessException("User not found.");
         await ApplyProfileUpdatesToUser(updatedUser, user);
@@ -22,7 +22,7 @@ public class UpdateUserCommandHandler
         return;
     }
 
-    private static async Task ApplyProfileUpdatesToUser(UpdateUserProfileDto updatedUser, User user)
+    private static async Task ApplyProfileUpdatesToUser(UpdateUserCommand updatedUser, User user)
     {
         if (!string.IsNullOrWhiteSpace(updatedUser.UserName))
         {

@@ -2,20 +2,21 @@
 using Application.Common.Extensions;
 using Application.Common.Interfaces.Repositories;
 using Application.Features.Common.Models;
+using Application.Features.Users.DTOs;
 using Domain.Entities;
 using MediatR;
 using System.Linq.Expressions;
 
 namespace Application.Features.Users.Queries.GetUsers;
 
-public class GetUsersQueryHandler : IRequestHandler<GetUsersQuery, PagedResult<UserDto>>
+public class GetUsersQueryHandler : IRequestHandler<GetUsersQuery, PagedResult<UserDtoResponse>>
 {
     private readonly IUserRepository _userRepository;
     public GetUsersQueryHandler(IUserRepository userRepository)
     {
         _userRepository = userRepository;
     }
-    public async Task<PagedResult<UserDto>> Handle(GetUsersQuery request, CancellationToken cancellationToken)
+    public async Task<PagedResult<UserDtoResponse>> Handle(GetUsersQuery request, CancellationToken cancellationToken)
     {
         Expression<Func<User, bool>>? filter = x => true;
         if (request.IsActive.HasValue)
@@ -38,18 +39,9 @@ public class GetUsersQueryHandler : IRequestHandler<GetUsersQuery, PagedResult<U
                             orderBy: GetOrderByExpression(request.OrderBy), 
                             ascending: request.IsAscending);
 
-        var userDtos = users.Select(x => new UserDto
-        {
-            Id = x.Id,
-            Email = x.Email,
-            UserName = x.UserName,
-            PhoneNumber = x.PhoneNumber,
-            Roles = x.Roles,
-            IsActive = x.IsActive,
-            CreatedAt = x.CreatedAt
-        }).ToList();
+        var userDtos = users.Select(x => x.ToUserDto()).ToList();
 
-        return new PagedResult<UserDto>
+        return new PagedResult<UserDtoResponse>
         {
             Items = userDtos,
             Total = totalCount,

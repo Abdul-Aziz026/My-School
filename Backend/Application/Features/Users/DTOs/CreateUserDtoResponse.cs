@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Domain.Entities;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -29,5 +30,22 @@ public class CreateUserDtoResponse
                this.UserName == createdUser.UserName &&
                this.IsActive == createdUser.IsActive &&
                this.PhoneNumber == createdUser.PhoneNumber;
+    }
+}
+
+public static class CreateUserDtoResponseExtensions
+{
+    public static CreateUserDtoResponse ToCreateUserDtoResponse(this User newUser)
+    {
+        return new CreateUserDtoResponse
+        {
+            Id = newUser.Id,
+            Email = newUser.Email,
+            UserName = newUser.UserName,
+            Roles = newUser.Roles,
+            IsActive = newUser.IsActive,
+            CreatedAt = newUser.CreatedAt,
+            PhoneNumber = newUser.PhoneNumber
+        };
     }
 }

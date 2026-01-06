@@ -44,16 +44,7 @@ public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, Creat
 
             await _userRepository.AddAsync<User>(newUser);
 
-            return new CreateUserDtoResponse
-            {
-                Id = newUser.Id,
-                Email = newUser.Email,
-                UserName = newUser.UserName,
-                Roles = newUser.Roles,
-                IsActive = newUser.IsActive,
-                CreatedAt = newUser.CreatedAt,
-                PhoneNumber = newUser.PhoneNumber
-            };
+            return newUser.ToCreateUserDtoResponse();
         }
         catch (Exception ex)
         {

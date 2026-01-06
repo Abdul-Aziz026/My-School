@@ -23,7 +23,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="My School.ApiTests\Configuration\" />
     <Folder Include="My School.PerformanceTests\" />
   </ItemGroup>
 

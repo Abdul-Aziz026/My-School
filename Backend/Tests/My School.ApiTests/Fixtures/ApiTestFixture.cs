@@ -9,6 +9,7 @@ public class ApiTestFixture : IAsyncLifetime
 {
     public CustomWebApplicationFactory<Program> Factory { get; private set; }
     public HttpClient Client { get; private set; } = null!;
+    public string baseUrl = "http://localhost:5000";
 
     public async Task InitializeAsync()
     {
@@ -48,10 +49,11 @@ public class ApiTestFixture : IAsyncLifetime
         response.EnsureSuccessStatusCode();
         return await response.Content.ReadFromJsonAsync<T>();
     }
-    public async Task<HttpResponseMessage> PostAsync<T>(string url, T data)
+    public async Task<TResponse?> PostAsync<TRequest, TResponse>(string url, TRequest data)
     {
         var response = await Client.PostAsJsonAsync(url, data);
-        return response;
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<TResponse>();
     }
     public async Task<HttpResponseMessage> PutAsync<T>(string url, T data)
     {

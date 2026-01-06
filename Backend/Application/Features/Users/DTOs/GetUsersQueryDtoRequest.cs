@@ -13,7 +13,7 @@ public class GetUsersQueryDtoRequest
     public int Page { get; set; } = 1;
     public int PageSize { get; set; } = 10;
 
-    public GetUsersQuery ToUserQuery()
+    public GetUsersQuery ToGetUsersQuery()
     {
         return new GetUsersQuery
         {

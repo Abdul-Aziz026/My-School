@@ -30,7 +30,7 @@ public class UsersController : Controller
     //[Authorize(Roles = "Admin")] // Only admin can list users
     public async Task<IActionResult> GetUsers([FromQuery] GetUsersQueryDtoRequest request)
     {
-        var getUsersQuery = request.ToUserQuery();
+        var getUsersQuery = request.ToGetUsersQuery();
         var users = await _messageBus.SendAsync<GetUsersQuery, PagedResult<UserDtoResponse>>(getUsersQuery);
         return Ok(users);
     }

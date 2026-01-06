@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
 using MongoDB.Driver;
+using System.Reflection;
 using Testcontainers.MongoDb;
 
 namespace YourApp.ApiTests.Fixtures;
@@ -33,25 +34,36 @@ public class CustomWebApplicationFactory<TProgram> : WebApplicationFactory<TProg
     {
         builder.ConfigureAppConfiguration((context, config) =>
         {
+
             // Remove existing configuration
             config.Sources.Clear();
 
-            // Add test configuration
-            var testConfig = new Dictionary<string, string?>
+            // Get the path to the test configuration file
+            var fileName = "appsettings.Test.json";
+
+            var basePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!;
+            var rootPath = Directory.GetParent(basePath)!.Parent!.Parent!.FullName;
+
+            var configPath = Path.Combine(rootPath, "My School.ApiTests", "Configuration", fileName);
+
+
+            // Add test configuration from JSON file
+            config.AddJsonFile(configPath, optional: false, reloadOnChange: false);
+
+            // Override MongoDB connection string with test container
+            var overrideConfig = new Dictionary<string, string?>
             {
-                ["MongoDbSettings:ConnectionString"] = ConnectionString,
-                ["MongoDbSettings:DatabaseName"] = "MySchool-TestDb",
-                ["Jwt:Key"] = "test-secret-key-for-testing-purposes-minimum-32-chars",
-                ["Jwt:Issuer"] = "TestIssuer",
-                ["Jwt:Audience"] = "TestAudience"
+                ["MongoSettings:ConnectionString"] = ConnectionString,
+                ["MongoSettings:DatabaseName"] = "MySchool-TestDb"
             };
 
-            config.AddInMemoryCollection(testConfig);
+            config.AddInMemoryCollection(overrideConfig);
         });
 
         builder.ConfigureServices(services =>
         {
             // Additional service configuration if needed
+            // You might want to mock external services like email, RabbitMQ, or Redis here
         });
     }
 

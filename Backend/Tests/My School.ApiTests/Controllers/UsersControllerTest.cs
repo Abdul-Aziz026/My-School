@@ -50,41 +50,27 @@ public class UsersControllerTest : IClassFixture<ApiTestFixture>
 
     #region GetUsers Tests
     [Fact]
-    public async Task GetUsers_ValidRequest_ReturnsPagedUsers()
+    public async Task GetUsers_WithAllFilters_ReturnsFilteredUsers()
     {
         // Arrange
         var request = new GetUsersQueryDtoRequest
         {
             Page = 1,
             PageSize = 10,
-            Role = "",
-            Search = "",
-            OrderBy = "",
+            Role = "Admin",
+            Search = "john",
+            OrderBy = "Email",
             IsAscending = true,
             IsActive = true
         };
 
-        // Convert DTO to query string
-        var queryParams = new Dictionary<string, string?>
-        {
-            ["Page"] = request.Page.ToString(),
-            ["PageSize"] = request.PageSize.ToString(),
-            ["Role"] = request.Role,
-            ["Search"] = request.Search,
-            ["OrderBy"] = request.OrderBy,
-            ["IsAscending"] = request.IsAscending.ToString(),
-            ["IsActive"] = request.IsActive?.ToString()
-        };
-
-        var api = QueryHelpers.AddQueryString("/api/users", queryParams);
-        //var api = "/api/users";
-
         // Act
-        var actualResponse = await _fixture.GetAsync<PagedResult<UserDtoResponse>>(api);
+        var actualResponse = await _fixture
+            .GetAsync<GetUsersQueryDtoRequest, PagedResult<UserDtoResponse>>(request, "/api/users");
 
         // Assert
         Assert.NotNull(actualResponse);
-        Assert.True(actualResponse.Items.Count >= 0); // list can be empty
+        Assert.True(actualResponse.Items.Count >= 0);
         Assert.True(actualResponse.Total >= 0);
     }
     #endregion

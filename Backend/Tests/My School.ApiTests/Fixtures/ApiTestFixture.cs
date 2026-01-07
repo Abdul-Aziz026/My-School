@@ -1,4 +1,5 @@
 ﻿
+using Microsoft.AspNetCore.WebUtilities;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using YourApp.ApiTests.Fixtures;
@@ -42,12 +43,33 @@ public class ApiTestFixture : IAsyncLifetime
     #endregion
 
 
-    #region All api crud operations
-    public async Task<T?> GetAsync<T>(string url)
+    #region get users by paged
+    public async Task<TResponse?> GetAsync<TRequest, TResponse>(TRequest request, string route)
     {
+        // Convert DTO properties to query string
+        var queryParams = new Dictionary<string, string>();
+
+        foreach (var prop in typeof(TRequest).GetProperties())
+        {
+            var value = prop.GetValue(request);
+            if (value != null)
+            {
+                // Lowercase booleans for model binding
+                if (value is bool b)
+                    queryParams[prop.Name] = b.ToString().ToLower();
+                else
+                    queryParams[prop.Name] = value.ToString()!;
+            }
+        }
+        // Build full URL
+        var url = QueryHelpers.AddQueryString(route, queryParams);
+
+        // Call controller
         var response = await Client.GetAsync(url);
         response.EnsureSuccessStatusCode();
-        return await response.Content.ReadFromJsonAsync<T>();
+
+        // Deserialize response
+        return await response.Content.ReadFromJsonAsync<TResponse>();
     }
     public async Task<TResponse?> PostAsync<TRequest, TResponse>(string url, TRequest data)
     {

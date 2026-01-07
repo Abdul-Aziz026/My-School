@@ -1,5 +1,5 @@
-﻿using Application.Features.Users.Queries.GetUsers;
-using System;
+﻿using System;
+using Application.Features.Users.Queries.GetUsers;
 
 namespace Application.Features.Users.DTOs;
 
@@ -8,7 +8,7 @@ public class GetUsersQueryDtoRequest
     public string Role { get; set; } = string.Empty;
     public string Search { get; set; } = string.Empty;
     public string OrderBy { get; set; } = string.Empty;
-    public bool IsAscending { get; set; }
+    public bool IsAscending { get; set; } = false;
     public bool? IsActive { get; set; }
     public int Page { get; set; } = 1;
     public int PageSize { get; set; } = 10;

@@ -1,5 +1,7 @@
 ﻿
+using Application.Common.Exceptions;
 using Microsoft.AspNetCore.WebUtilities;
+using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using YourApp.ApiTests.Fixtures;
@@ -46,30 +48,80 @@ public class ApiTestFixture : IAsyncLifetime
     #region get users by paged
     public async Task<TResponse?> GetAsync<TRequest, TResponse>(TRequest request, string route)
     {
-        // Convert DTO properties to query string
-        var queryParams = new Dictionary<string, string>();
+        var url = route;
 
-        foreach (var prop in typeof(TRequest).GetProperties())
+        // Only build query string if request is provided
+        if (request != null)
         {
-            var value = prop.GetValue(request);
-            if (value != null)
+            // Convert DTO properties to query string
+            var queryParams = new Dictionary<string, string>();
+
+            foreach (var prop in typeof(TRequest).GetProperties())
             {
-                // Lowercase booleans for model binding
-                if (value is bool b)
-                    queryParams[prop.Name] = b.ToString().ToLower();
-                else
-                    queryParams[prop.Name] = value.ToString()!;
+                var value = prop.GetValue(request);
+                if (value != null)
+                {
+                    // Lowercase booleans for model binding
+                    if (value is bool b)
+                        queryParams[prop.Name] = b.ToString().ToLower();
+                    else
+                        queryParams[prop.Name] = value.ToString()!;
+                }
+            }
+            if (queryParams.Any())
+            {
+                url = QueryHelpers.AddQueryString(route, queryParams!);
             }
         }
-        // Build full URL
-        var url = QueryHelpers.AddQueryString(route, queryParams);
 
         // Call controller
         var response = await Client.GetAsync(url);
-        response.EnsureSuccessStatusCode();
+
+        switch (response.StatusCode)
+        {
+            // Success cases
+            case HttpStatusCode.OK:           // 200 - GET
+            case HttpStatusCode.Created:      // 201 - POST
+            case HttpStatusCode.NoContent:    // 204 - DELETE/PUT
+                break;
+
+            // Client errors (4xx)
+            case HttpStatusCode.BadRequest:   // 400
+                var badRequestContent = await response.Content.ReadAsStringAsync();
+                throw new ArgumentException($"Bad Request: {badRequestContent}");
+
+            case HttpStatusCode.Unauthorized: // 401
+                throw new UnauthorizedAccessException("Unauthorized - authentication required.");
+
+            case HttpStatusCode.Forbidden:    // 403
+                throw new UnauthorizedAccessException("Forbidden - insufficient permissions.");
+
+            case HttpStatusCode.NotFound:     // 404
+                var notFoundContent = await response.Content.ReadAsStringAsync();
+                throw new NotFoundException($"Not Found: {notFoundContent}"); // Using custom exception
+
+            case HttpStatusCode.Conflict:     // 409
+                var conflictContent = await response.Content.ReadAsStringAsync();
+                throw new InvalidOperationException($"Conflict: {conflictContent}");
+
+            case HttpStatusCode.RequestTimeout: // 408
+                throw new TimeoutException("Request timed out.");
+
+            // Server errors (5xx)
+            case HttpStatusCode.InternalServerError: // 500
+                var serverErrorContent = await response.Content.ReadAsStringAsync();
+                throw new Exception($"Internal Server Error: {serverErrorContent}");
+
+            default:
+                var content = await response.Content.ReadAsStringAsync();
+                throw new HttpRequestException(
+                    $"Request failed with status {(int)response.StatusCode} ({response.StatusCode}): {content}");
+        }
+
 
         // Deserialize response
-        return await response.Content.ReadFromJsonAsync<TResponse>();
+        var result = await response.Content.ReadFromJsonAsync<TResponse>();
+        return result;
     }
     public async Task<TResponse?> PostAsync<TRequest, TResponse>(string url, TRequest data)
     {

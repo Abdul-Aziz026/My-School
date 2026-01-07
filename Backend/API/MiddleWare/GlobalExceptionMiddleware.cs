@@ -1,3 +1,4 @@
+using Application.Common.Exceptions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using System;
@@ -29,7 +30,20 @@ public class GlobalExceptionMiddleware
     private static Task HandleExceptionAsync(HttpContext context, Exception exception)
     {
         context.Response.ContentType = "application/json";
-        context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
+        context.Response.ContentType = "application/json";
+
+        // Map exception to HTTP status code
+        context.Response.StatusCode = exception switch
+        {
+            NotFoundException => StatusCodes.Status404NotFound,
+            KeyNotFoundException => StatusCodes.Status404NotFound,
+            ArgumentNullException => StatusCodes.Status400BadRequest,
+            ArgumentException => StatusCodes.Status400BadRequest,
+            UnauthorizedAccessException => StatusCodes.Status401Unauthorized,
+            TimeoutException => StatusCodes.Status408RequestTimeout,
+            InvalidOperationException => StatusCodes.Status409Conflict,
+            _ => StatusCodes.Status500InternalServerError
+        };
 
         var response = new
         {

@@ -8,6 +8,7 @@ public class UserDtoResponse
     public string Email { get; set; } = string.Empty;
     public string UserName { get; set; } = string.Empty;
     public string PhoneNumber { get; set; } = string.Empty;
+    public string Address { get; set; } = string.Empty;
     public List<string> Roles { get; set; } = new();
     public bool IsActive { get; set; }
     public DateTime CreatedAt { get; set; }
@@ -15,7 +16,7 @@ public class UserDtoResponse
 
 public static class UserDtoExtensions
 {
-    public static UserDtoResponse ToUserDto(this User user)
+    public static UserDtoResponse ToUserDtoResponse(this User user)
     {
         return new UserDtoResponse
         {
@@ -25,7 +26,8 @@ public static class UserDtoExtensions
             PhoneNumber = user.PhoneNumber,
             Roles = user.Roles,
             IsActive = user.IsActive,
-            CreatedAt = user.CreatedAt
+            CreatedAt = user.CreatedAt,
+            Address = user.Address
         };
     }
 }

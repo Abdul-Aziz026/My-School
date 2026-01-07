@@ -39,7 +39,7 @@ public class GetUsersQueryHandler : IRequestHandler<GetUsersQuery, PagedResult<U
                             orderBy: GetOrderByExpression(request.OrderBy), 
                             ascending: request.IsAscending);
 
-        var userDtos = users.Select(x => x.ToUserDto()).ToList();
+        var userDtos = users.Select(x => x.ToUserDtoResponse()).ToList();
 
         return new PagedResult<UserDtoResponse>
         {

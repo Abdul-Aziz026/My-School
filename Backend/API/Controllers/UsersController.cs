@@ -36,12 +36,12 @@ public class UsersController : Controller
     }
 
     // GET /api/users/{id}
-    [HttpGet("{id:guid}")]
+    [HttpGet("{id}")]
     //[Authorize(Roles = "Admin")] // Admin or self-check can be implemented
     public async Task<IActionResult> GetUserById(string id)
     {
         var command = new GetUserByIdQuery(id);
-        var user = await _messageBus.SendAsync< GetUserByIdQuery, UserInfo>(command);
+        var user = await _messageBus.SendAsync< GetUserByIdQuery, UserDtoResponse>(command);
         return Ok(user);
     }
 
@@ -56,7 +56,7 @@ public class UsersController : Controller
     }
 
     // PUT /api/users/{id}
-    [HttpPut("{id:guid}")]
+    [HttpPut("{id}")]
     //[Authorize(Roles = "Admin")]
     public async Task<IActionResult> UpdateUser(string id, UpdateUserDtoRequest request)
     {
@@ -66,7 +66,7 @@ public class UsersController : Controller
     }
 
     // DELETE /api/users/{id} (soft delete)
-    [HttpDelete("{id:guid}")]
+    [HttpDelete("{id}")]
     //[Authorize(Roles = "Admin")]
     public async Task<IActionResult> DeleteUser(string id)
     {

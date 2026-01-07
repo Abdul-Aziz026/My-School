@@ -8,6 +8,7 @@
 **/Logs/*
 **/temp
 **/appsettings.Development.json
+**/appsettings.Test.json
 
 # ======================
 # Frontend (Angular)

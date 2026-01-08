@@ -20,9 +20,9 @@ public class Repository : IRepository
         return await DbContext.AddAsync<T>(entity);
     }
 
-    public Task<bool> DeleteAsync<T>(T entity) where T : BaseEntity
+    public async Task<bool> DeleteAsync<T>(T entity) where T : BaseEntity
     {
-        throw new NotImplementedException();
+        return await DbContext.DeleteAsync<T>(entity);
     }
 
     public async Task<List<T>> GetAllAsync<T>() where T : class

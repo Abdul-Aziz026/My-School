@@ -1,4 +1,5 @@
 ﻿
+using Application.Common.Exceptions;
 using Application.Common.Interfaces.Repositories;
 using Domain.Entities;
 using MediatR;
@@ -16,13 +17,18 @@ public class DeleteUserCommandHandler : IRequestHandler<DeleteUserCommand>
     {
         var user = await _userRepository.GetByIdAsync<User>(request.UserId);
         if (user == null)
-            throw new Exception($"User with ID '{request.UserId}' not found");
+            throw new NotFoundException($"User with ID '{request.UserId}' not found");
 
         // Soft delete - just set IsActive to false
-        user.IsActive = false;
-        user.LockoutEnd = DateTime.UtcNow.AddYears(100); // Permanent lockout
+        //user.IsActive = false;
+        //user.LockoutEnd = DateTime.UtcNow.AddYears(100); // Permanent lockout
 
-        await _userRepository.UpdateAsync<User>(user);
+        var isDeleteSuccessFull = await _userRepository.DeleteAsync<User>(user);
+        if (!isDeleteSuccessFull)
+        {
+            throw new NotFoundException("db error");
+        }
         return;
+
     }
 }

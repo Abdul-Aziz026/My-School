@@ -62,7 +62,7 @@ public class UsersController : Controller
     {
         var command = request.ToUpdateUserCommand(id);
         await _messageBus.SendAsync<UpdateUserCommand>(command);
-        return Ok(new { message = "User updated successfully" });
+        return NoContent();
     }
 
     // DELETE /api/users/{id} (soft delete)

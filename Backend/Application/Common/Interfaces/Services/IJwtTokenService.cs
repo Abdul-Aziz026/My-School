@@ -6,4 +6,5 @@ namespace Application.Common.Interfaces.Services;
 public interface IJwtTokenService
 {
     Task<RefreshTokenResponse> GenerateTokenResponseAsync(User newUser);
+    string ComputeTokenHash(string token);
 }

@@ -16,10 +16,9 @@ public class MongoContext : IMongoContext
         _database = client.GetDatabase(options.Value.DatabaseName);
     }
 
-
-    public IMongoCollection<T> GetCollection<T>(string collectionName = null!)
+    public IMongoCollection<T> GetCollection<T>(string name = null!)
     {
-        collectionName = collectionName ?? typeof(T).Name.ToLower();
-        return _database.GetCollection<T>(collectionName.ToLower());
+        name = name ?? typeof(T).Name.ToLower();
+        return _database.GetCollection<T>(name.ToLower());
     }
 }

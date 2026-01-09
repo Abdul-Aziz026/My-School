@@ -28,7 +28,7 @@ public static class RateLimiterExtensions
             // Policy 2: Login endpoint - 5 attempts per 1 minutes
             options.AddFixedWindowLimiter("login", opt =>
             {
-                opt.PermitLimit = 5;
+                opt.PermitLimit = 1000;
                 opt.Window = TimeSpan.FromMinutes(1);
                 opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
                 opt.QueueLimit = 2; // No queuing
@@ -37,7 +37,7 @@ public static class RateLimiterExtensions
             // Policy 3: Registration endpoint - 3 attempts per hour
             options.AddFixedWindowLimiter("register", opt =>
             {
-                opt.PermitLimit = 3;
+                opt.PermitLimit = 1000;
                 opt.Window = TimeSpan.FromHours(1);
                 opt.QueueLimit = 0;
             });
@@ -45,7 +45,7 @@ public static class RateLimiterExtensions
             // Policy 4: API endpoint - 100 requests per minute
             options.AddSlidingWindowLimiter("api", opt =>
             {
-                opt.PermitLimit = 100;
+                opt.PermitLimit = 1000;
                 opt.Window = TimeSpan.FromMinutes(1);
                 opt.SegmentsPerWindow = 6; // 10-second segments
                 opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;

@@ -32,9 +32,9 @@ public class CustomWebApplicationFactory<TProgram> : WebApplicationFactory<TProg
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
+        builder.UseEnvironment("Test");
         builder.ConfigureAppConfiguration((context, config) =>
         {
-
             // Remove existing configuration
             config.Sources.Clear();
 

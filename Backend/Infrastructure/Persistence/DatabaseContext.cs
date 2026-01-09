@@ -56,7 +56,7 @@ public class DatabaseContext
         try
         {
             var collection = _context.GetCollection<T>();
-            var result = await collection.ReplaceOneAsync(o => o.Id.Equals(entity.Id), entity);
+            var result = await collection.ReplaceOneAsync(o => o.Id == entity.Id, entity);
             var success = result.IsAcknowledged && result.ModifiedCount > 0;
             if (success)
             {
@@ -66,12 +66,11 @@ public class DatabaseContext
             {
                 _logger.LogWarning($"UpdateAsync did not modify any document for type {typeof(T).FullName} with Id {entity.Id}");
             }
-
             return success;
         }
-        catch
+        catch (Exception ex)  // 💡 Also capture the exception
         {
-            _logger.LogError($"UpdateAsync failed for type {typeof(T).FullName} with Id {entity.Id}");
+            _logger.LogError(ex, $"UpdateAsync failed for type {typeof(T).FullName} with Id {entity.Id}");
             return false;
         }
     }

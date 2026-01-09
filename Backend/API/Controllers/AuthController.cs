@@ -1,5 +1,4 @@
-﻿using Application.Common.Helper;
-using Application.Common.Interfaces.Publisher;
+﻿using Application.Common.Interfaces.Publisher;
 using Application.Features.Auth.Commands.ForgotPassword;
 using Application.Features.Auth.Commands.Login;
 using Application.Features.Auth.Commands.Logout;
@@ -7,9 +6,7 @@ using Application.Features.Auth.Commands.RefreshToken;
 using Application.Features.Auth.Commands.Register;
 using Application.Features.Auth.Commands.ResetPassword;
 using Application.Features.Auth.DTOs;
-using Application.Features.Auth.Queries.GetUser;
-using Application.Features.Users.Commands.UpdateUser;
-using Microsoft.AspNetCore.Authorization;
+using Application.Features.Auth.Queries.GetCurrentUser;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using System.IdentityModel.Tokens.Jwt;
@@ -29,95 +26,57 @@ public class AuthController : Controller
 
     [HttpPost("register")]
     [EnableRateLimiting("register")] // Apply rate limiting to register endpoint 3 attempts per 1 hour
-    public async Task<ActionResult<AuthResponse>> Register(RegisterDto user)
+    public async Task<ActionResult<AuthResponse>> Register(RegisterDto registerUserRequest)
     {
-        try
-        {
-            var command = new RegisterUserCommand(user);
-            var tokenResponse = await _messageBus.SendAsync<RegisterUserCommand, RefreshTokenResponse>(command);
-            var getUserCommand = new GetUserByEmailQuery(TellMe.Email!);
-            var userInfo = await _messageBus.SendAsync<GetUserByEmailQuery, UserInfo>(getUserCommand);
+        var command = registerUserRequest.ToRegisterUserCommand();
+        var response = await _messageBus.SendAsync<RegisterUserCommand, AuthResponse>(command);
 
-            var response = new AuthResponse()
-            {
-                Status = ResultStatus.Succeeded,
-                Token = tokenResponse.AccessToken,
-                TokenExpiry = tokenResponse.AccessTokenExpiry,
-                User = userInfo!
-            };
-
-            await SetRefreshTokenInCookie(tokenResponse.RefreshToken, tokenResponse.RefreshTokenExpiry);
-
-            return Ok(response);
-        }
-        catch (InvalidOperationException ex)
+        if (response.Status != ResultStatus.Succeeded)
         {
-            return BadRequest(new { Error = ex.Message });
+            return BadRequest(new { Error = response.ErrorMessage });
         }
-        catch (Exception)
-        {
-            return StatusCode(500, new { Error = "An error occurred during registration" });
-        }
+
+        await SetRefreshTokenInCookie(response.RefreshToken, response.RefreshTokenExpiry);
+        return Ok(response);
     }
 
     [HttpPost("login")]
     [EnableRateLimiting("login")] // Apply rate limiting to login endpoint 5 attempts per 1 minute
-    public async Task<ActionResult<AuthResponse>> Login(LoginDto user)
+    public async Task<ActionResult<AuthResponse>> Login(LoginDto loginDto)
     {
-        var command = new LoginUserCommand(user);
-        var tokenResponse = await _messageBus.SendAsync<LoginUserCommand, RefreshTokenResponse>(command);
+        var command = loginDto.ToLoginUserCommand();
+        var response = await _messageBus.SendAsync<LoginUserCommand, AuthResponse>(command);
 
-        if (tokenResponse is null)
+        if (response.Status != ResultStatus.Succeeded)
         {
-            return Unauthorized(new { Error = "Invalid email or password" });
+            throw new UnauthorizedAccessException(response.ErrorMessage);
         }
-        var getUserCommand = new GetUserByEmailQuery(TellMe.Email!);
-        var userInfo = await _messageBus.SendAsync<GetUserByEmailQuery, UserInfo>(getUserCommand);
-        var response = new AuthResponse
-        {
-            Status = ResultStatus.Succeeded,
-            Token = tokenResponse.AccessToken,
-            TokenExpiry = tokenResponse.AccessTokenExpiry,
-            User = userInfo!
-        };
 
-        await SetRefreshTokenInCookie(tokenResponse.RefreshToken, tokenResponse.RefreshTokenExpiry);
+        await SetRefreshTokenInCookie(response.RefreshToken, response.RefreshTokenExpiry);
         return Ok(response);
     }
 
     [HttpPost("refresh")]
-    public async Task<ActionResult<AuthResponse>> Refresh()
+    public async Task<ActionResult<AuthResponse>> Refresh(object? obj)
     {
         var refreshToken = Request.Cookies["refreshToken"];
 
         if (string.IsNullOrEmpty(refreshToken))
         {
-            return Unauthorized(new { Error = "Refresh token not found" });
+            throw new UnauthorizedAccessException("Refresh token not found");
         }
-        try
+        var command = new RenewUserTokensCommand(refreshToken);
+        var response = await _messageBus.SendAsync<RenewUserTokensCommand, AuthResponse>(command);
+
+        if (response.Status != ResultStatus.Succeeded)
         {
-            var command = new RenewUserTokensCommand(refreshToken);
-            var tokenResponse = await _messageBus.SendAsync<RenewUserTokensCommand, RefreshTokenResponse>(command);
-            var getUserCommand = new GetUserByEmailQuery(TellMe.Email!);
-            var userInfo = await _messageBus.SendAsync<GetUserByEmailQuery, UserInfo>(getUserCommand);
-
-            var response = new AuthResponse
-            {
-                Status = ResultStatus.Succeeded,
-                Token = tokenResponse.AccessToken,
-                TokenExpiry = tokenResponse.AccessTokenExpiry,
-                User = userInfo!
-            };
-
-            await SetRefreshTokenInCookie(tokenResponse.RefreshToken, tokenResponse.RefreshTokenExpiry);
-
-            return Ok(response);
-        }
-        catch (UnauthorizedAccessException ex)
-        {
+            // Clear invalid refresh token cookie
             Response.Cookies.Delete("refreshToken");
-            return Unauthorized(new { Error = ex.Message });
+            throw new UnauthorizedAccessException("Refresh token not found");
         }
+
+        await SetRefreshTokenInCookie(response.RefreshToken, response.RefreshTokenExpiry);
+        return Ok(response);
     }
 
 
@@ -141,24 +100,19 @@ public class AuthController : Controller
     }
 
     [EnableRateLimiting("api")]
-    //[Authorize]
-    [HttpGet("profile")]
-    public async Task<ActionResult<UserInfo>> Me()
+    //[Authorize]// Ensure this endpoint requires authentication
+    [HttpGet("me")]
+    public async Task<ActionResult<CurrentUserDtoResponse>> Me()
     {
-        var userId = GetUserIdFromClaims(User);
-        if (string.IsNullOrWhiteSpace(userId))
+        var query = new GetCurrentUserQuery();
+        var response = await _messageBus.SendAsync<GetCurrentUserQuery, CurrentUserDtoResponse>(query);
+
+        if (!response.IsSuccess)
         {
-            return Unauthorized(new { Error = "Invalid token or user id not found" });
+            return NotFound(new { Error = response.ErrorMessage });
         }
 
-        var getUserCommand = new GetUserByEmailQuery(TellMe.Email!);
-        var userInfo = await _messageBus.SendAsync<GetUserByEmailQuery, UserInfo>(getUserCommand);
-        if (userInfo is null)
-        {
-            return NotFound(new { Error = "User not found" });
-        }
-
-        return Ok(userInfo);
+        return Ok(response);
     }
 
     [HttpPost("forgot-password")]
@@ -170,9 +124,9 @@ public class AuthController : Controller
     }
 
     [HttpPost("reset-password")]
-    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto dto)
+    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto request)
     {
-        var command = new ResetPasswordCommand(dto);
+        var command = request.ToResetPasswordCommand();
         await _messageBus.SendAsync<ResetPasswordCommand>(command);
         return Ok(new { Message = "Password has been reset successfully." });
     }
@@ -191,7 +145,7 @@ public class AuthController : Controller
         Response.Cookies.Append("refreshToken", refreshToken, cookieOptions);
     }
 
-    private string GetUserIdFromToken(string token) 
+    private string GetUserIdFromToken(string token)
     {
         var handler = new JwtSecurityTokenHandler();
         var jwtToken = handler.ReadJwtToken(token);

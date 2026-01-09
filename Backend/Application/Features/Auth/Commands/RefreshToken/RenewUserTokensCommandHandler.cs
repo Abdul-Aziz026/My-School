@@ -2,6 +2,7 @@
 using Application.Common.Interfaces.Repositories;
 using Application.Common.Interfaces.Services;
 using Application.Features.Auth.DTOs;
+using Application.Features.Users.DTOs;
 using Domain.Entities;
 using MediatR;
 using System.Security.Cryptography;
@@ -15,54 +16,72 @@ namespace Application.Features.Auth.Commands.RefreshToken;
 /// </summary>
 /// <param name="token">old refresh token</param>
 /// <returns>new Access Token and new Refresh Token</returns>
-/// <exception cref="UnauthorizedAccessException">Invalid, expired or revoked refresh token</exception>
-public class RenewUserTokensCommandHandler : IRequestHandler<RenewUserTokensCommand, RefreshTokenResponse>
+public class RenewUserTokensCommandHandler : IRequestHandler<RenewUserTokensCommand, AuthResponse>
 {
     private readonly IUserRepository _userRepository;
-    private readonly IRefreshTokenRepository _refreshTokenRepository;
+    private readonly IRefreshTokenRepository _irefreshTokenRepository;
     private readonly IJwtTokenService _jwtTokenService;
     public RenewUserTokensCommandHandler(IUserRepository userRepository,
-                                         IRefreshTokenRepository refreshTokenRepository,
+                                         IRefreshTokenRepository irefreshTokenRepository,
                                          IJwtTokenService jwtTokenService)
     {
         _userRepository = userRepository;
-        _refreshTokenRepository = refreshTokenRepository;
+        _irefreshTokenRepository = irefreshTokenRepository;
         _jwtTokenService = jwtTokenService;
     }
-    public async Task<RefreshTokenResponse> Handle(RenewUserTokensCommand request, CancellationToken cancellationToken)
+    public async Task<AuthResponse> Handle(RenewUserTokensCommand request, CancellationToken cancellationToken)
     {
         var token = request.RefreshToken;
-        var response = new RefreshTokenResponse();
-        var tokenHash = ComputeTokenHash(token);
-        var refreshToken = await _refreshTokenRepository.GetByTokenHashAsync(tokenHash);
+        var response = new AuthResponse();
+        var tokenHash = _jwtTokenService.ComputeTokenHash(token);
+        var refreshToken = await _irefreshTokenRepository.GetByTokenHashAsync(tokenHash);
         if (refreshToken is null)
         {
-            response.Result = ActionEvent.InvalidToken;
+            response.Status = ResultStatus.InvalidToken;
             response.ErrorMessage = "Invalid or Expired access token...";
             return response;
         }
         if (refreshToken.IsRevoked || refreshToken.ExpiresAt < DateTime.UtcNow)
         {
-            response.Result = ActionEvent.Revoked;
+            response.Status = ResultStatus.Revoked;
             response.ErrorMessage = "Invalid or Expired access token...";
             return response;
         }
+
         var user = await _userRepository.GetByIdAsync<User>(refreshToken.UserId);
         if (user is null)
         {
-            throw new UnauthorizedAccessException("User not found");
+            response.Status = ResultStatus.Failed;
+            response.ErrorMessage = "User not found...";
+            return response;
         }
+
+        // Check if user account is locked
+        if (!user.LockoutEnabled && user.LockoutEnd.HasValue && user.LockoutEnd.Value > DateTime.UtcNow)
+        {
+            return new AuthResponse
+            {
+                Status = ResultStatus.Failed,
+                ErrorMessage = "Account is locked"
+            };
+        }
+
         // revoke the old refresh token...
         refreshToken.IsRevoked = true;
-        await _refreshTokenRepository.UpdateAsync(refreshToken);
-        // Generate new tokens
-        return await _jwtTokenService.GenerateTokenResponseAsync(user);
-    }
+        await _irefreshTokenRepository.UpdateAsync(refreshToken);
 
-    private string ComputeTokenHash(string token)
-    {
-        using var sha256 = SHA256.Create();
-        var hash = sha256.ComputeHash(Encoding.UTF8.GetBytes(token));
-        return Convert.ToBase64String(hash);
+        // Generate new tokens
+        var tokenResponse = await _jwtTokenService.GenerateTokenResponseAsync(user);
+
+        // save refresh token
+        await _irefreshTokenRepository.AddAsync(tokenResponse?.userRefreshTokenEntity!);
+
+        response.Status = ResultStatus.Succeeded;
+        response.AccessToken = tokenResponse?.AccessToken!;
+        response.AccessTokenExpiry = tokenResponse!.AccessTokenExpiry;
+        response.RefreshToken = tokenResponse.RefreshToken;
+        response.RefreshTokenExpiry = tokenResponse.RefreshTokenExpiry;
+        response.User = user.ToUserDtoResponse();
+        return response;
     }
 }

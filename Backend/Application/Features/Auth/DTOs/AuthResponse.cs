@@ -1,18 +1,23 @@
-﻿using Domain.Entities;
-using System;
+﻿using Application.Features.Users.DTOs;
 
 namespace Application.Features.Auth.DTOs;
 
 public class AuthResponse
 {
     public ResultStatus Status { get; set; }
-    public string Token { get; set; } = string.Empty;
-    public DateTime TokenExpiry { get; set; }
-    public UserInfo? User { get; set; }
+    public string AccessToken { get; set; } = string.Empty;
+    public DateTime AccessTokenExpiry { get; set; }
+    public string RefreshToken { get; set; } = string.Empty;
+    public DateTime RefreshTokenExpiry { get; set; }
+    public string ErrorMessage { get; set; } = string.Empty;
+    public UserDtoResponse? User { get; set; }
 }
 
 public enum ResultStatus
 {
     Succeeded,
-    Failed
+    Failed,
+    InvalidToken,
+    ExpiredToken,
+    Revoked
 }

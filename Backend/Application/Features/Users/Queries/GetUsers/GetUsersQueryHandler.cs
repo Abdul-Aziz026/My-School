@@ -46,7 +46,7 @@ public class GetUsersQueryHandler : IRequestHandler<GetUsersQuery, PagedResult<U
             Items = userDtos,
             Total = totalCount,
             Page = request.Page,
-            PageSize = userDtos.Count
+            PageSize = request.PageSize
         };
     }
 
@@ -59,8 +59,8 @@ public class GetUsersQueryHandler : IRequestHandler<GetUsersQuery, PagedResult<U
         {
             "username" => x => x.UserName,
             "email" => x => x.Email,
-            "createdat" => x => x.CreatedAt,
-            "updatedat" => x => x.UpdatedAt,
+            "createdat" => x => x.CreatedAt!,
+            "updatedat" => x => x.UpdatedAt!,
             _ => x => x.CreatedAt
         };
     }

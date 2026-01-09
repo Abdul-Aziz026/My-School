@@ -19,6 +19,8 @@ public static class TellMe
         _current.Value = holder;
     }
 
+    public static CurrentUserContext? GetCurrentUserContext() => _current.Value;
+
     public static void ClearCurrentUserContext()
     {
         _current.Value = null;

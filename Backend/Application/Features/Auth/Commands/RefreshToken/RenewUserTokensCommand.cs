@@ -6,7 +6,7 @@ using System.Text;
 
 namespace Application.Features.Auth.Commands.RefreshToken;
 
-public class RenewUserTokensCommand : IRequest<RefreshTokenResponse>
+public class RenewUserTokensCommand : IRequest<AuthResponse>
 {
     public string RefreshToken { get; }
     public RenewUserTokensCommand(string refreshToken)

@@ -1,7 +1,9 @@
 ﻿using Domain.Entities;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Text;
+using ZstdSharp;
 
 namespace Application.Features.Users.DTOs;
 
@@ -30,6 +32,11 @@ public class CreateUserDtoResponse
                this.UserName == createdUser.UserName &&
                this.IsActive == createdUser.IsActive &&
                this.PhoneNumber == createdUser.PhoneNumber;
+    }
+
+    override public int GetHashCode()
+    {
+        return base.GetHashCode();
     }
 }
 

@@ -1,6 +1,7 @@
 ﻿
 using Application.Common.Exceptions;
 using Application.Common.Interfaces.Repositories;
+using Application.Common.Interfaces.Services;
 using Domain.Entities;
 using MediatR;
 
@@ -9,9 +10,12 @@ namespace Application.Features.Users.Commands.DeleteUser;
 public class DeleteUserCommandHandler : IRequestHandler<DeleteUserCommand>
 {
     private readonly IUserRepository _userRepository;
-    public DeleteUserCommandHandler(IUserRepository userRepository)
+    private readonly ICacheService _cacheService;
+    public DeleteUserCommandHandler(IUserRepository userRepository,
+                                    ICacheService cacheService)
     {
         _userRepository = userRepository;
+        _cacheService = cacheService;
     }
     public async Task Handle(DeleteUserCommand request, CancellationToken cancellationToken)
     {
@@ -28,6 +32,7 @@ public class DeleteUserCommandHandler : IRequestHandler<DeleteUserCommand>
         {
             throw new NotFoundException("db error");
         }
+        await _cacheService.RemoveAsync($"UserInfo-{request.UserId}");
         return;
 
     }

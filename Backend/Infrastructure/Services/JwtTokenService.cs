@@ -27,20 +27,23 @@ public class JwtTokenService : IJwtTokenService
     public async Task<RefreshTokenResponse> GenerateTokenResponseAsync(User user)
     {
         var accessToken = await CreateJwtToken(user);
-        var refreshToken = new RefreshToken
+        var plainRefreshToken = Guid.NewGuid().ToString();
+        var refreshToken = new UserRefreshToken
         {
             UserId = user.Id,
-            TokenHash = ComputeTokenHash(Guid.NewGuid().ToString()),
+            RefreshTokenHash = ComputeTokenHash(plainRefreshToken),
             ExpiresAt = DateTime.UtcNow.AddDays(_refreshTokenExpirationDays),
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
+            IsRevoked = false,
         };
         return new RefreshTokenResponse
         {
             Result = ActionEvent.Succeeded,
             AccessToken = accessToken,
-            RefreshToken = refreshToken.TokenHash,
+            RefreshToken = plainRefreshToken,
             AccessTokenExpiry = DateTime.UtcNow.AddMinutes(_jwtExpirationMinutes),
-            RefreshTokenExpiry = refreshToken.ExpiresAt
+            RefreshTokenExpiry = refreshToken.ExpiresAt,
+            userRefreshTokenEntity = refreshToken
         };
     }
 
@@ -79,7 +82,7 @@ public class JwtTokenService : IJwtTokenService
         return base64Token;
     }
 
-    private string ComputeTokenHash(string token)
+    public string ComputeTokenHash(string token)
     {
         using var sha256 = SHA256.Create();
         var hash = sha256.ComputeHash(Encoding.UTF8.GetBytes(token));

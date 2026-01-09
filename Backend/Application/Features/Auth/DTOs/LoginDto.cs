@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Application.Features.Auth.Commands.Login;
+using System;
 using System.ComponentModel.DataAnnotations;
 
 namespace Application.Features.Auth.DTOs;
@@ -10,4 +11,13 @@ public class LoginDto
     public string Email { get; set; } = string.Empty;
     [Required(ErrorMessage = "Password is required.")]
     public string Password { get; set; } = string.Empty;
+
+    public LoginUserCommand ToLoginUserCommand()
+    {
+        return new LoginUserCommand()
+        {
+            Email = this.Email,
+            Password = this.Password
+        };
+    }
 }

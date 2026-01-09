@@ -1,14 +1,13 @@
 ﻿using Application.Features.Auth.DTOs;
 using MediatR;
+using System.ComponentModel.DataAnnotations;
 
 namespace Application.Features.Auth.Commands.Register;
 
-public class RegisterUserCommand : IRequest<RefreshTokenResponse>
+public class RegisterUserCommand : IRequest<AuthResponse>
 {
-    public RegisterDto RegisterDto { get; }
-    public RegisterUserCommand(RegisterDto registerDto)
-    {
-        RegisterDto = registerDto;
-    }
-
+    public string Email { get; set; } = string.Empty;
+    public string Password { get; set; } = string.Empty;
+    public string UserName { get; set; } = string.Empty;
+    public string PhoneNumber { get; set; } = string.Empty;
 }

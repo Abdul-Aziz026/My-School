@@ -35,9 +35,9 @@ public class Repository : IRepository
         return await DbContext.GetItemByConditionAsync<T>(u => u.Id == userId);
     }
 
-    public Task<T?> GetItemByConditionAsync<T>(Expression<Func<T, bool>> criteria) where T : BaseEntity
+    public async Task<T?> GetItemByConditionAsync<T>(Expression<Func<T, bool>> criteria) where T : BaseEntity
     {
-        throw new NotImplementedException();
+        return await DbContext.GetItemByConditionAsync<T>(criteria);
     }
 
     public Task<IReadOnlyList<T>?> GetItemsByConditionAsync<T>(Expression<Func<T, bool>> criteria) where T : BaseEntity

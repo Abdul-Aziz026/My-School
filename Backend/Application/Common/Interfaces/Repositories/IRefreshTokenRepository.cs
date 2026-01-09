@@ -7,8 +7,8 @@ namespace Application.Common.Interfaces.Repositories;
 
 public interface IRefreshTokenRepository
 {
-    Task<RefreshToken?> GetByTokenHashAsync(string tokenHash);
-    Task AddAsync(RefreshToken token);
-    Task UpdateAsync(RefreshToken token);
-    Task DeleteManyAsync(IEnumerable<RefreshToken> tokens);
+    Task<UserRefreshToken?> GetByTokenHashAsync(string tokenHash);
+    Task AddAsync(UserRefreshToken token);
+    Task UpdateAsync(UserRefreshToken token);
+    Task DeleteManyAsync(IEnumerable<UserRefreshToken> tokens);
 }

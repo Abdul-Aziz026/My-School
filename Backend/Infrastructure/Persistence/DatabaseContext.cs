@@ -4,6 +4,7 @@ using Domain.Entities;
 using MassTransit;
 using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
+using SharpCompress.Common;
 using System.Linq.Expressions;
 using System.Threading;
 
@@ -84,7 +85,7 @@ public class DatabaseContext
             _logger.LogInformation($"Deleted entity of type {typeof(T).FullName} with Id {entity.Id}");
             return true;
         }
-        catch
+        catch(Exception ex)
         {
             _logger.LogError($"DeleteAsync failed for type {typeof(T).FullName} with Id {entity.Id}");
             return false;
@@ -163,5 +164,21 @@ public class DatabaseContext
             .ToListAsync();
 
         return items;
+    }
+
+    public async Task<bool> DeleteByIdAsync<T>(string id) where T : BaseEntity
+    {
+        try
+        {
+            var collection = _context.GetCollection<T>();
+            await collection.DeleteOneAsync(o => o.Id.Equals(id));
+            _logger.LogInformation($"Deleted entity of type {typeof(T).FullName} with Id {id}");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError($"DeleteAsync failed for type {typeof(T).FullName} with Id {id}");
+            return false;
+        }
     }
 }

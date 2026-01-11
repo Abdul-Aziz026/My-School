@@ -2,8 +2,6 @@
 using Domain.Entities;
 using Domain.Repositories.Base;
 using Infrastructure.Persistence;
-using SharpCompress.Common;
-using System;
 using System.Linq.Expressions;
 
 namespace Infrastructure.Repositories.Base;
@@ -25,6 +23,11 @@ public class Repository : IRepository
         return await DbContext.DeleteAsync<T>(entity);
     }
 
+    public async Task<bool> DeleteByIdAsync<T>(string Id) where T : BaseEntity
+    {
+        return await DbContext.DeleteByIdAsync<T>(Id);
+    }
+
     public async Task<List<T>> GetAllAsync<T>() where T : class
     {
         return await DbContext.GetAllAsync<T>();
@@ -40,9 +43,9 @@ public class Repository : IRepository
         return await DbContext.GetItemByConditionAsync<T>(criteria);
     }
 
-    public Task<IReadOnlyList<T>?> GetItemsByConditionAsync<T>(Expression<Func<T, bool>> criteria) where T : BaseEntity
+    public async Task<List<T>?> GetItemsByConditionAsync<T>(Expression<Func<T, bool>> criteria) where T : BaseEntity
     {
-        throw new NotImplementedException();
+        return await DbContext.GetItemsByConditionAsync<T>(criteria);
     }
 
     public async Task<bool> UpdateAsync<T>(T entity) where T : BaseEntity

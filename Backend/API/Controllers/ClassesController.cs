@@ -1,9 +1,13 @@
 ﻿using Application.Common.Interfaces.Publisher;
 using Application.Features.SchoolClassManagement.Commands.CreateClass;
 using Application.Features.SchoolClassManagement.Commands.DeleteClass;
+using Application.Features.SchoolClassManagement.Commands.EnrollStudent;
 using Application.Features.SchoolClassManagement.Commands.UpdateClass;
 using Application.Features.SchoolClassManagement.DTOs;
 using Application.Features.SchoolClassManagement.Queries.GetClassById;
+using Application.Features.SchoolClassManagement.Queries.GetClassStudents;
+using Application.Features.SchoolClassManagement.Queries.GetTeacherClasses;
+using Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers;
@@ -39,10 +43,6 @@ public class ClassesController : Controller
     {
         var query = new GetClassByIdQuery(id);
         var result = await _messageBus.SendAsync<GetClassByIdQuery, ClassResponseDto>(query);
-
-        if (result == null)
-            return NotFound(new { message = $"Class with ID {id} not found" });
-
         return Ok(result);
     }
 
@@ -53,8 +53,6 @@ public class ClassesController : Controller
     public async Task<IActionResult> UpdateClass(string id, [FromBody] UpdateClassDto dto)
     {
         var command = dto.ToUpdateClassCommand();
-
-        // Command returns Unit (void)
         await _messageBus.SendAsync<UpdateClassCommand>(command);
 
         // 204 No Content - standard for successful updates with no body
@@ -76,16 +74,10 @@ public class ClassesController : Controller
     /// Gets class with enrolled students
     /// </summary>
     [HttpGet("{id}/students")]
-    [ProducesResponseType(typeof(ClassWithStudentsDto), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetClassStudents(string id)
     {
         var query = new GetClassStudentsQuery(id);
-        var result = await _mediator.Send(query);
-
-        if (result == null)
-            return NotFound(new { message = $"Class with ID {id} not found" });
-
+        var result = await _messageBus.SendAsync<GetClassStudentsQuery, List<StudentResponseDto>> (query);
         return Ok(result);
     }
 
@@ -93,25 +85,14 @@ public class ClassesController : Controller
     /// Gets all classes taught by a teacher
     /// </summary>
     [HttpGet("teacher/{teacherId}")]
-    [ProducesResponseType(typeof(List<ClassDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetTeacherClasses(string teacherId)
     {
         var query = new GetTeacherClassesQuery(teacherId);
-        var result = await _mediator.Send(query);
+        var result = await _messageBus.SendAsync<GetTeacherClassesQuery, List<ClassResponseDto>> (query);
         return Ok(result);
     }
 }
 
-[ApiController]
-[Route("api/[controller]")]
-public class EnrollmentsController : ControllerBase
-{
-    private readonly IMediator _mediator;
-
-    public EnrollmentsController(IMediator mediator)
-    {
-        _mediator = mediator;
-    }
 
     /// <summary>
     /// Enrolls a student in a class
@@ -126,13 +107,12 @@ public class EnrollmentsController : ControllerBase
         var command = new EnrollStudentCommand(request.StudentId, request.ClassId);
 
         // Command returns enrollment ID
-        var enrollmentId = await _mediator.Send(command);
+        var enrollmentId = await _messageBus.SendAsync<EnrollStudentCommand, string>(command);
 
         // Return 201 with enrollment ID
         // Client can query student's classes to see full details
         return CreatedAtAction(
             nameof(GetStudentClasses),
-            new { studentId = request.StudentId },
             new { enrollmentId }
         );
     }

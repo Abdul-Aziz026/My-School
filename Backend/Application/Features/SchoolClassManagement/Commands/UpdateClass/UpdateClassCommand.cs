@@ -5,7 +5,7 @@ namespace Application.Features.SchoolClassManagement.Commands.UpdateClass;
 
 public class UpdateClassCommand : IRequest
 {
-    public int Id { get; set; }
+    public string Id { get; set; }
     public string SchoolId { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public int Grade { get; set; }

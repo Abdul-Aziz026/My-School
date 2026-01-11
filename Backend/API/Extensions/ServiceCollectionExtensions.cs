@@ -22,6 +22,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IRepository, Repository>();
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+        services.AddScoped<IClassRepository, ClassRepository>();
 
         // register JWT token service
         services.AddScoped<IJwtTokenService, JwtTokenService>();

@@ -1,0 +1,34 @@
+﻿using Application.Features.SchoolClassManagement.Commands.UpdateClass;
+
+namespace Application.Features.SchoolClassManagement.DTOs;
+
+public class UpdateClassDto
+{
+    public int Id { get; set; }
+    public string SchoolId { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public int Grade { get; set; }
+    public string Section { get; set; } = string.Empty;
+    public string AcademicYear { get; set; } = string.Empty;
+    public int Capacity { get; set; }
+    public List<string> Subjects { get; set; } = new();
+    public List<string> TeacherIds { get; set; } = new();
+    public bool IsActive { get; set; }
+
+    public UpdateClassCommand ToUpdateClassCommand()
+    {
+        return new UpdateClassCommand
+        {
+            Id = Id,
+            SchoolId = SchoolId,
+            Name = Name,
+            Grade = Grade,
+            Section = Section,
+            AcademicYear = AcademicYear,
+            Capacity = Capacity,
+            Subjects = Subjects,
+            TeacherIds = TeacherIds,
+            IsActive = IsActive
+        };
+    }
+}

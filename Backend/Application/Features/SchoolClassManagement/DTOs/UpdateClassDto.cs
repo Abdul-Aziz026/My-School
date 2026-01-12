@@ -4,7 +4,6 @@ namespace Application.Features.SchoolClassManagement.DTOs;
 
 public class UpdateClassDto
 {
-    public int Id { get; set; }
     public string SchoolId { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public int Grade { get; set; }
@@ -15,11 +14,11 @@ public class UpdateClassDto
     public List<string> TeacherIds { get; set; } = new();
     public bool IsActive { get; set; }
 
-    public UpdateClassCommand ToUpdateClassCommand()
+    public UpdateClassCommand ToUpdateClassCommand(string id)
     {
         return new UpdateClassCommand
         {
-            Id = Id,
+            Id = id,
             SchoolId = SchoolId,
             Name = Name,
             Grade = Grade,

@@ -16,5 +16,5 @@ public interface IRepository
     Task<List<T>> GetAllAsync<T>() where T : class;
     Task<T?> GetByIdAsync<T>(string Id) where T: BaseEntity;
     Task<T?> GetItemByConditionAsync<T>(Expression<Func<T, bool>> criteria) where T : BaseEntity;
-    Task<IReadOnlyList<T>?> GetItemsByConditionAsync<T>(Expression<Func<T, bool>> criteria) where T : BaseEntity;
+    Task<List<T>?> GetItemsByConditionAsync<T>(Expression<Func<T, bool>> criteria) where T : BaseEntity;
 }

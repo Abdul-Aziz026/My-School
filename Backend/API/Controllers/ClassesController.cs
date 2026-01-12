@@ -2,12 +2,14 @@
 using Application.Features.SchoolClassManagement.Commands.CreateClass;
 using Application.Features.SchoolClassManagement.Commands.DeleteClass;
 using Application.Features.SchoolClassManagement.Commands.EnrollStudent;
+using Application.Features.SchoolClassManagement.Commands.TransferStudent;
+using Application.Features.SchoolClassManagement.Commands.UnenrollStudent;
 using Application.Features.SchoolClassManagement.Commands.UpdateClass;
 using Application.Features.SchoolClassManagement.DTOs;
 using Application.Features.SchoolClassManagement.Queries.GetClassById;
 using Application.Features.SchoolClassManagement.Queries.GetClassStudents;
+using Application.Features.SchoolClassManagement.Queries.GetStudentClasses;
 using Application.Features.SchoolClassManagement.Queries.GetTeacherClasses;
-using Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers;
@@ -52,7 +54,7 @@ public class ClassesController : Controller
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateClass(string id, [FromBody] UpdateClassDto dto)
     {
-        var command = dto.ToUpdateClassCommand();
+        var command = dto.ToUpdateClassCommand(id);
         await _messageBus.SendAsync<UpdateClassCommand>(command);
 
         // 204 No Content - standard for successful updates with no body
@@ -91,7 +93,6 @@ public class ClassesController : Controller
         var result = await _messageBus.SendAsync<GetTeacherClassesQuery, List<ClassResponseDto>> (query);
         return Ok(result);
     }
-}
 
 
     /// <summary>
@@ -102,7 +103,7 @@ public class ClassesController : Controller
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> EnrollStudent([FromBody] EnrollStudentRequest request)
+    public async Task<IActionResult> EnrollStudent([FromBody] UnEnrollStudentRequestDto request)
     {
         var command = new EnrollStudentCommand(request.StudentId, request.ClassId);
 
@@ -124,11 +125,10 @@ public class ClassesController : Controller
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> UnenrollStudent([FromBody] UnenrollStudentRequest request)
+    public async Task<IActionResult> UnenrollStudent([FromBody] UnEnrollStudentRequestDto request)
     {
-        var command = new UnenrollStudentCommand(request.StudentId, request.ClassId);
-        await _mediator.Send(command);
-
+        var command = request.ToUnenrollStudentCommand();
+        await _messageBus.SendAsync<UnenrollStudentCommand>(command);
         return NoContent();
     }
 
@@ -140,35 +140,27 @@ public class ClassesController : Controller
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> TransferStudent([FromBody] TransferStudentRequest request)
+    public async Task<IActionResult> TransferStudent([FromBody] TransferStudentRequestDto request)
     {
-        var command = new TransferStudentCommand(
-            request.StudentId,
-            request.FromClassId,
-            request.ToClassId
-        );
+        var command = request.ToTransferStudentCommand();
 
         // Command returns new enrollment ID
-        var newEnrollmentId = await _mediator.Send(command);
+        var newEnrollmentId = await _messageBus.SendAsync<TransferStudentCommand, string>(command);
 
         // Return 200 OK with new enrollment ID
-        return Ok(new { enrollmentId = newEnrollmentId });
+        return Ok(new { Id = newEnrollmentId });
     }
 
     /// <summary>
     /// Gets all classes a student is enrolled in
     /// </summary>
     [HttpGet("student/{studentId}")]
-    [ProducesResponseType(typeof(List<StudentClassDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(List<ClassResponseDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetStudentClasses(string studentId)
     {
         var query = new GetStudentClassesQuery(studentId);
-        var result = await _mediator.Send(query);
+        var result = await _messageBus.SendAsync<GetStudentClassesQuery, List<ClassResponseDto>>(query);
         return Ok(result);
     }
 }
 
-// Request DTOs remain the same
-public record EnrollStudentRequest(string StudentId, string ClassId);
-public record UnenrollStudentRequest(string StudentId, string ClassId);
-public record TransferStudentRequest(string StudentId, string FromClassId, string ToClassId);

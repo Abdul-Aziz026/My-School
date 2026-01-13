@@ -2,6 +2,7 @@
 using Application.Common.Exceptions;
 using Application.Common.Interfaces.Repositories;
 using Domain.Entities;
+using Domain.Entities.JunctionEntities;
 using MediatR;
 using System.Linq.Expressions;
 

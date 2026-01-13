@@ -1,5 +1,4 @@
-﻿
-namespace Domain.Entities;
+﻿namespace Domain.Entities.JunctionEntities;
 
 public class ClassStudentEnrollment : BaseEntity
 {
@@ -7,11 +6,12 @@ public class ClassStudentEnrollment : BaseEntity
     public string ClassId { get; set; } = string.Empty;
     public DateTime EnrolledAt { get; set; } = DateTime.UtcNow;
     public EnrollMentStatus Status { get; set; }
+    public List<string> SubjectIds { get; set; } = new();
 }
 
 public enum EnrollMentStatus
 {
     Pending,
-    InActive,
-    Active
+    Active,
+    InActive
 }

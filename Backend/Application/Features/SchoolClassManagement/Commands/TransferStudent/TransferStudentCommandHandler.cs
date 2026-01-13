@@ -2,6 +2,7 @@
 using Application.Common.Exceptions;
 using Application.Common.Interfaces.Repositories;
 using Domain.Entities;
+using Domain.Entities.JunctionEntities;
 using MediatR;
 using System.Linq.Expressions;
 
@@ -14,11 +15,11 @@ public class TransferStudentCommandHandler : IRequestHandler<TransferStudentComm
     {
         _classRepository = classRepository;
     }
-    public async Task<string> Handle(TransferStudentCommand request, CancellationToken cancellationToken)
+    public async Task<string> Handle(TransferStudentCommand command, CancellationToken cancellationToken)
     {
-        var studentId = request.StudentId;
-        var toClassId = request.ToClassId;
-        var fromClassId = request.FromClassId;
+        var studentId = command.StudentId;
+        var toClassId = command.ToClassId;
+        var fromClassId = command.FromClassId;
 
         if (studentId is null)
         {
@@ -64,12 +65,22 @@ public class TransferStudentCommandHandler : IRequestHandler<TransferStudentComm
             throw new InvalidOperationException("New class is full");
         }
 
+        foreach (var Id in command.SubjectIds)
+        {
+            var subject = await _classRepository.GetByIdAsync<Subjects>(Id);
+            if (subject is null)
+            {
+                throw new NotFoundException("Subject not found");
+            }
+        }
+
         var newEnrollment = new ClassStudentEnrollment
         {
             ClassId = newClass.Id,
             StudentId = studentId,
             EnrolledAt = DateTime.UtcNow,
-            Status = EnrollMentStatus.Active
+            Status = EnrollMentStatus.Active,
+            SubjectIds = command.SubjectIds
         };
 
         await _classRepository.AddAsync<ClassStudentEnrollment>(newEnrollment);

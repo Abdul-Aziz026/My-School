@@ -1,4 +1,5 @@
 ﻿
+using Application.Common.Exceptions;
 using Application.Common.Interfaces.Repositories;
 using Domain.Entities;
 using MediatR;
@@ -14,10 +15,21 @@ public class DeleteClassCommandHandler : IRequestHandler<DeleteClassCommand>
     }
     public async Task Handle(DeleteClassCommand request, CancellationToken cancellationToken)
     {
-        bool isDeleted = await _classRepository.DeleteByIdAsync<User>(request.Id);
+        var id = request.Id;
+        if (string.IsNullOrWhiteSpace(id))
+        {
+            throw new ArgumentNullException($"Id can't be null or empty!!!");
+        }
+        var deleteClass = await _classRepository.GetByIdAsync<Class>(id);
+        if (deleteClass == null)
+        {
+            throw new NotFoundException("class not found");
+        }
+        deleteClass.IsActive = false;
+        bool isDeleted = await _classRepository.UpdateAsync<Class>(deleteClass);
         if (!isDeleted)
         {
-            throw new ArgumentException("User not found");
+            throw new Exception("Uuknown exception");
         }
         return;
     }

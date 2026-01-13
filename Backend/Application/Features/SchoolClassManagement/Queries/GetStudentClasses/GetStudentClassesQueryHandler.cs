@@ -5,6 +5,7 @@ using Domain.Entities;
 using MediatR;
 using System.Linq.Expressions;
 using Application.Common.Extensions;
+using Domain.Entities.JunctionEntities;
 
 namespace Application.Features.SchoolClassManagement.Queries.GetStudentClasses;
 

@@ -12,7 +12,24 @@ public class MongoContext : IMongoContext
 
     public MongoContext(IOptions<MongoSettings> options)
     {
-        IMongoClient client = new MongoClient(options.Value.ConnectionString);
+        // network compression options:
+        // reduces the amount of data passed over the network between mongodb & app.
+        // var uri = $"{options.Value.ConnectionString}?compressors=snappy,zlib,zstd";
+        // var settings = MongoClientSettings.FromConnectionString(uri);
+
+        var settings = MongoClientSettings.FromConnectionString(options.Value.ConnectionString);
+        settings.UseTls = options.Value.UseTls;
+        settings.MaxConnecting = options.Value.MaxConnecting;
+        settings.MinConnectionPoolSize = options.Value.MinConnectionPoolSize;
+        settings.MaxConnectionPoolSize = options.Value.MaxConnectionPoolSize;
+        settings.MaxConnectionLifeTime = TimeSpan.FromMinutes(options.Value.MaxConnectionLifeTime);
+        settings.WaitQueueTimeout = TimeSpan.FromSeconds(options.Value.WaitQueTimeout);
+        settings.RetryWrites = options.Value.RetryWrites;
+        settings.RetryWrites = options.Value.RetryReads;
+        settings.WriteConcern = WriteConcern.WMajority;
+        settings.ReadConcern = ReadConcern.Majority;
+
+        IMongoClient client = new MongoClient(settings);
         _database = client.GetDatabase(options.Value.DatabaseName);
     }
 

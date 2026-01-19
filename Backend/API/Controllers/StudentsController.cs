@@ -1,6 +1,5 @@
 ﻿using Application.Common.Interfaces.Publisher;
 using Application.Features.SchoolClassManagement.Commands.EnrollStudent;
-using Application.Features.SchoolClassManagement.Commands.TransferStudent;
 using Application.Features.SchoolClassManagement.Commands.UnenrollStudent;
 using Application.Features.SchoolClassManagement.DTOs;
 using Application.Features.SchoolClassManagement.Queries.GetStudentClasses;
@@ -32,14 +31,15 @@ public class StudentsController : Controller
         var command = request.ToEnrollStudentCommand();
 
         // Command returns enrollment ID
-        var enrollmentId = await _messageBus.SendAsync<EnrollStudentCommand, string>(command);
+        var enrolledResponse = await _messageBus.SendAsync<EnrollStudentCommand, EnrollStudentResponseDto>(command);
 
+        if (!enrolledResponse.Success)
+        {
+            return BadRequest(new { Message = enrolledResponse.Message });
+        }
         // Return 201 with enrollment ID
         // Client can query student's classes to see full details
-        return CreatedAtAction(
-            nameof(Application.Features.SchoolClassManagement.Queries.GetStudentClasses),
-            new { enrollmentId }
-        );
+        return CreatedAtAction("Enrolled", enrolledResponse);
     }
 
     /// <summary>
@@ -54,25 +54,6 @@ public class StudentsController : Controller
         var command = request.ToUnenrollStudentCommand();
         await _messageBus.SendAsync<UnenrollStudentCommand>(command);
         return NoContent();
-    }
-
-    /// <summary>
-    /// Transfers a student from one class to another
-    /// </summary>
-    /// <returns>New enrollment ID</returns>
-    [HttpPost("transfer")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> TransferStudent([FromBody] TransferStudentRequestDto request)
-    {
-        var command = request.ToTransferStudentCommand();
-
-        // Command returns new enrollment ID
-        var newEnrollmentId = await _messageBus.SendAsync<TransferStudentCommand, string>(command);
-
-        // Return 200 OK with new enrollment ID
-        return Ok(new { Id = newEnrollmentId });
     }
 
 

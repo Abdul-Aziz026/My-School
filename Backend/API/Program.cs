@@ -18,7 +18,6 @@ builder.Host.UseSerilog();
 builder.Services.AddConfigurationSettings(builder.Configuration);
 // Initialize Configuration Helper
 ConfigurationHelper.Initialize(builder.Configuration);
-builder.Services.AddAuditLogging();
 builder.Services.AddMediatRAndMasstransit(builder.Configuration);
 builder.Services.AddRedis(builder.Configuration);
 builder.Services.AddRateLimitingServices();

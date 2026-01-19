@@ -18,7 +18,7 @@ public class GetStudentClassesQueryHandler : IRequestHandler<GetStudentClassesQu
     }
     public async Task<List<ClassResponseDto>> Handle(GetStudentClassesQuery request, CancellationToken cancellationToken)
     {
-        var enrollments = await _classRepository.GetItemsByConditionAsync<ClassStudentEnrollment>(x => x.StudentId == request.StudentId);
+        var enrollments = await _classRepository.GetItemsByConditionAsync<Enrollment>(x => x.StudentId == request.StudentId);
         Expression<Func<Class, bool>> condition = x => true;
         foreach (var enrollment in enrollments)
         {

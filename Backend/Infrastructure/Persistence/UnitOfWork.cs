@@ -1,55 +1,50 @@
 ﻿
 using Application.Common.Interfaces.Persistence;
 using Application.Settings;
+using Domain.Interfaces;
+using MassTransit.Configuration;
 using Microsoft.Extensions.Options;
-using MongoDB.Driver;
 
 namespace Infrastructure.Persistence;
 
 public class UnitOfWork : IUnitOfWork
 {
-    private readonly IMongoClient _client;
-    private readonly IMongoDatabase _database;
-    private IClientSessionHandle _session;
+    private readonly IDatabaseContext _dbContext;
+    private readonly string _indexInfo;
+    private IDatabaseContext _transactionContext;
 
-    public UnitOfWork(IOptions<MongoSettings> options)
+    public UnitOfWork(IDatabaseContext context, IOptions<MongoSettings> option)
     {
-        _client = new MongoClient(options.Value.ConnectionString);
-        _database = _client.GetDatabase(options.Value.DatabaseName);
+        _dbContext = context;
+        _indexInfo = option.Value.DatabaseName;
     }
 
-
-
-    public IClientSessionHandle Session => throw new NotImplementedException();
-
-    public async Task StartTransactionAsync()
+    public async Task BeginTransactionAsync()
     {
-        _session = await _client.StartSessionAsync();
-        _session.StartTransaction();
+        _transactionContext = _dbContext.BeginTransaction();
+        await Task.CompletedTask;
     }
 
     public async Task CommitAsync()
     {
-        if (_session != null && _session.IsInTransaction)
+        if (_transactionContext != null)
         {
-            await _session.CommitTransactionAsync();
+            await _transactionContext.CommitTransactionAsync();
+            _transactionContext = null;
         }
     }
 
     public async Task RollbackAsync()
     {
-        if (_session != null && _session.IsInTransaction)
+        if (_transactionContext != null)
         {
-            await _session.AbortTransactionAsync();
+            await _transactionContext.AbortTransactionAsync();
+            _transactionContext = null;
         }
     }
-    public Task Repository<T>() where T : class
-    {
-        throw new NotImplementedException();
-    }
-
+    
     public void Dispose()
     {
-        _session?.Dispose();
+        _transactionContext?.Dispose();
     }
 }

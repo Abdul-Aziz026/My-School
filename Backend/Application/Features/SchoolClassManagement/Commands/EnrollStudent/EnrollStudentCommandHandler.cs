@@ -1,60 +1,98 @@
 ﻿
 using Application.Common.Exceptions;
 using Application.Common.Interfaces.Repositories;
+using Application.Features.SchoolClassManagement.DTOs;
 using Domain.Entities;
 using Domain.Entities.JunctionEntities;
+using Domain.Interfaces;
 using MediatR;
+using Microsoft.Extensions.Logging;
 using System.Linq.Expressions;
 
 namespace Application.Features.SchoolClassManagement.Commands.EnrollStudent;
 
-public class EnrollStudentCommandHandler : IRequestHandler<EnrollStudentCommand, string>
+public class EnrollStudentCommandHandler : IRequestHandler<EnrollStudentCommand, EnrollStudentResponseDto>
 {
-    private readonly IClassRepository _classRepository;
-    public EnrollStudentCommandHandler(IClassRepository classRepository)
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly IStudentRepository _studentRepository;
+    private readonly IEnrollmentRepository _enrollmentRepository;
+    private readonly IPaymentRepository _paymentRepository;
+    private readonly ILogger<EnrollStudentCommandHandler> _logger;
+
+    public EnrollStudentCommandHandler(IEnrollmentRepository enrollmentRepository,
+                                       IUnitOfWork unitOfWork,
+                                       IStudentRepository studentRepository,
+                                       IPaymentRepository paymentRepository,
+                                       ILogger<EnrollStudentCommandHandler> logger)
+
     {
-        _classRepository = classRepository;
+        _enrollmentRepository = enrollmentRepository;
+        _unitOfWork = unitOfWork;
+        _studentRepository = studentRepository;
+        _paymentRepository = paymentRepository;
+        _logger = logger;
     }
-    public async Task<string> Handle(EnrollStudentCommand command, CancellationToken cancellationToken)
+    public async Task<EnrollStudentResponseDto> Handle(EnrollStudentCommand command, CancellationToken cancellationToken)
     {
-        var classEntity = await _classRepository.GetByIdAsync<Class>(command.ClassId);
-        if (classEntity is null) {
-            throw new NotFoundException("Class not found");
-        }
-        var studentEntity = await _classRepository.GetByIdAsync<Student>(command.StudentId);
-        if (studentEntity is null)
+        var student = await _studentRepository.GetItemByConditionAsync<Student>(x => x.Id == command.StudentId);
+
+        if (student == null)
         {
-            throw new NotFoundException("Student not found");
+            throw new ArgumentException("Student not found");
         }
-        foreach (var Id in command.SubjectIds)
+        // Start transaction (Enrollment + Payment must succeed together)
+        await _unitOfWork.BeginTransactionAsync();
+        try
         {
-            var subject = await _classRepository.GetByIdAsync<Subjects>(Id);
-            if (subject is null)
+            // 1. Create Enrollment
+            var enrollment = new Enrollment
             {
-                throw new NotFoundException("Subject not found");
-            }
+                StudentId = command.StudentId,
+                ClassId = command.ClassId,
+                AcademicYear = command.AcademicYear,
+                EnrollmentDate = DateTime.UtcNow,
+                TuitionFee = command.TuitionFee,
+                Status = EnrollMentStatus.Enrolled
+            };
+            await _enrollmentRepository.AddAsync(enrollment);
+
+            _logger.LogInformation("Enrollment created: {EnrollmentId}", enrollment.Id);
+
+            // 2. Record Initial Payment
+            var payment = new Payment
+            {
+                StudentId = command.StudentId,
+                EnrollmentId = enrollment.Id,
+                Amount = command.InitialPayment,
+                PaymentDate = DateTime.UtcNow,
+                PaymentMethod = command.PaymentMethod,
+                Status = PaymentStatus.Paid
+            };
+            await _paymentRepository.AddAsync(payment);
+            _logger.LogInformation("Payment recorded: {PaymentId}", payment.Id);
+
+            // Commit transaction
+            await _unitOfWork.CommitAsync();
+
+            _logger.LogInformation(
+                "Student enrolled successfully: StudentId={StudentId}, EnrollmentId={EnrollmentId}",
+                command.StudentId, enrollment.Id);
+
+            return new EnrollStudentResponseDto
+            {
+                Success = true,
+                Message = "Student enrolled successfully",
+                EnrollmentId = enrollment.Id,
+                PaymentId = payment.Id
+            };
         }
-        Expression<Func<ClassStudentEnrollment, bool>> condition = x => x.StudentId == command.StudentId 
-                                                                        && x.ClassId == command.ClassId;
-        var enrollmentResponse = await _classRepository.GetItemByConditionAsync<ClassStudentEnrollment>(condition);
-        if (enrollmentResponse is null)
+        catch (Exception ex)
         {
-            throw new InvalidOperationException("Student already enrolled!");
+            _logger.LogError(ex, "Error enrolling student: {StudentId}", command.StudentId);
+            return new EnrollStudentResponseDto {
+                Success = false,
+                Message = ex.Message
+            };
         }
-        var enrollment = new ClassStudentEnrollment
-        {
-            Id = Guid.NewGuid().ToString(),
-            StudentId = command.StudentId,
-            ClassId = command.ClassId,
-            Status = EnrollMentStatus.Active,
-            SubjectIds = command.SubjectIds,
-            EnrolledAt = DateTime.UtcNow
-        };
-        var response = await _classRepository.AddAsync<ClassStudentEnrollment>(enrollment);
-        if (!response)
-        {
-            throw new Exception("unknown Exception");
-        }
-        return enrollment.Id;
     }
 }

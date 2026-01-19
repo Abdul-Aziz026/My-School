@@ -27,14 +27,14 @@ public class UnenrollStudentCommandHandler : IRequestHandler<UnenrollStudentComm
         {
             throw new NotFoundException("Student not found");
         }
-        Expression<Func<ClassStudentEnrollment, bool>> condition = x => x.StudentId == request.StudentId
+        Expression<Func<Enrollment, bool>> condition = x => x.StudentId == request.StudentId
                                                                         && x.ClassId == request.ClassId;
-        var enrollmentResponse = await _classRepository.GetItemByConditionAsync<ClassStudentEnrollment>(condition);
+        var enrollmentResponse = await _classRepository.GetItemByConditionAsync<Enrollment>(condition);
         if (enrollmentResponse is null)
         {
             throw new InvalidOperationException("Student already not enrolled!");
         }
-        var response = await _classRepository.DeleteByIdAsync<ClassStudentEnrollment>(enrollmentResponse.Id);
+        var response = await _classRepository.DeleteByIdAsync<Enrollment>(enrollmentResponse.Id);
         if (!response)
         {
             throw new Exception("unknown Exception");

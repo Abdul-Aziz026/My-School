@@ -2,6 +2,7 @@
 using Application.Common.Interfaces.Publisher;
 using Application.Common.Interfaces.Repositories;
 using Application.Common.Interfaces.Services;
+using Domain.Interfaces;
 using Domain.Repositories.Base;
 using Infrastructure.Persistence;
 using Infrastructure.Repositories;
@@ -15,18 +16,25 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddApplicationServices(this IServiceCollection services)
     {
         // Database 
-        services.AddScoped<IMongoContext, MongoContext>();
-        services.AddScoped<DatabaseContext>();
+        services.AddSingleton<IMongoContext, MongoContext>();
+        services.AddSingleton<IDatabaseContext, DatabaseContext>();
+        services.AddSingleton<IAuditService, AuditService>();
+
+        // unit of work
+        services.AddSingleton<IUnitOfWork, UnitOfWork>();
 
         // Repositories
-        services.AddScoped<IRepository, Repository>();
-        services.AddScoped<IUserRepository, UserRepository>();
-        services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
-        services.AddScoped<IClassRepository, ClassRepository>();
-        services.AddScoped<ISubjectRepository, SubjectRepository>();
+        services.AddSingleton<IRepository, Repository>();
+        services.AddSingleton<IUserRepository, UserRepository>();
+        services.AddSingleton<IRefreshTokenRepository, RefreshTokenRepository>();
+        services.AddSingleton<IClassRepository, ClassRepository>();
+        services.AddSingleton<ISubjectRepository, SubjectRepository>();
+        services.AddSingleton<IStudentRepository, StudentRepository>();
+        services.AddSingleton<IEnrollmentRepository, EnrollmentRepository>();
+        services.AddSingleton<IPaymentRepository, PaymentRepository>();
 
         // register JWT token service
-        services.AddScoped<IJwtTokenService, JwtTokenService>();
+        services.AddSingleton<IJwtTokenService, JwtTokenService>();
 
         // Email Services...
         services.AddScoped<IEmailService, BrevoEmailService>();

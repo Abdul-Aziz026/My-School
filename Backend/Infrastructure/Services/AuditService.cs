@@ -2,10 +2,11 @@
 using Domain.Entities;
 using Infrastructure.Persistence;
 using Application.Common.Interfaces.Services;
+using Application.Common.Interfaces.Persistence;
 
 namespace Infrastructure.Services;
 
-public class AuditService(DatabaseContext Context) : IAuditService
+public class AuditService(IDatabaseContext Context) : IAuditService
 {
     public async Task LogAsync(AuditLog log)
     {

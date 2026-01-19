@@ -1,4 +1,5 @@
-﻿using Application.Common.Interfaces.Services;
+﻿using Application.Common.Interfaces.Persistence;
+using Application.Common.Interfaces.Services;
 using Application.Features.Auth.DTOs;
 using Domain.Entities;
 using Infrastructure.Helper;
@@ -15,9 +16,9 @@ public class JwtTokenService : IJwtTokenService
 {
     private readonly int _jwtExpirationMinutes;
     private readonly int _refreshTokenExpirationDays;
-    private readonly DatabaseContext _databaseContext;
+    private readonly IDatabaseContext _databaseContext;
 
-    public JwtTokenService(DatabaseContext databaseContext)
+    public JwtTokenService(IDatabaseContext databaseContext)
     {
         _databaseContext = databaseContext;
         _jwtExpirationMinutes = Convert.ToInt32(ConfigurationHelper.GetConfigurationValue("Jwt:Expiration_Minutes"));

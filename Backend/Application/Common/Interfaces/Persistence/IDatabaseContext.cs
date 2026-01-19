@@ -1,11 +1,11 @@
-﻿
-using Domain.Entities;
+﻿using Domain.Entities;
 using System.Linq.Expressions;
 
 namespace Application.Common.Interfaces.Persistence;
 
 public interface IDatabaseContext
 {
+    // CRUD Operations
     /// <summary>
     /// Retrieves all entities of type T from the database
     /// </summary>
@@ -78,4 +78,20 @@ public interface IDatabaseContext
         Expression<Func<T, bool>>? criteria = null,
         bool ascending = true,
         CancellationToken cancellationToken = default) where T : BaseEntity;
+
+
+    // ========== TRANSACTION MANAGEMENT ==========
+    /// <summary>
+    /// Begin a transaction
+    /// </summary>
+    IDatabaseContext BeginTransaction();
+    /// <summary>
+    /// Commit transaction
+    /// </summary>
+    Task CommitTransactionAsync();
+    /// <summary>
+    /// Rollback transaction
+    /// </summary>
+    Task AbortTransactionAsync();
+    void Dispose();
 }

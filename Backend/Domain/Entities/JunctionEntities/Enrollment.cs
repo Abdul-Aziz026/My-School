@@ -1,17 +1,21 @@
 ﻿namespace Domain.Entities.JunctionEntities;
 
-public class ClassStudentEnrollment : BaseEntity
+public class Enrollment : BaseEntity
 {
     public string StudentId { get; set; } = string.Empty;
     public string ClassId { get; set; } = string.Empty;
-    public DateTime EnrolledAt { get; set; } = DateTime.UtcNow;
+    public DateTime EnrollmentDate { get; set; }
+    public string AcademicYear { get; set; }
+    public decimal TuitionFee { get; set; }
     public EnrollMentStatus Status { get; set; }
     public List<string> SubjectIds { get; set; } = new();
+
+    public string GetId() => Id;
 }
 
 public enum EnrollMentStatus
 {
-    Pending,
-    Active,
-    InActive
+    Enrolled,
+    Completed,
+    Dropped
 }

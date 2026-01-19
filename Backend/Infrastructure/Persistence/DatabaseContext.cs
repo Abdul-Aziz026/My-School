@@ -1,30 +1,70 @@
 ﻿
 using Application.Common.Interfaces.Persistence;
+using Application.Settings;
 using Domain.Entities;
-using MassTransit;
+using MassTransit.Caching.Internals;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using MongoDB.Driver;
-using SharpCompress.Common;
 using System.Linq.Expressions;
-using System.Threading;
 
 namespace Infrastructure.Persistence;
 
-public class DatabaseContext : IDatabaseContext
+public class DatabaseContext : IDatabaseContext, IDisposable
 {
     private readonly IMongoContext _context;
+    private readonly MongoSettings _mongoSettings;
     private readonly ILogger<DatabaseContext> _logger;
-    public DatabaseContext(IMongoContext context, ILogger<DatabaseContext> logger)
+    private MongoClient _client;
+    private IClientSessionHandle _session;
+    public DatabaseContext(IMongoContext context,
+                           ILogger<DatabaseContext> logger,
+                           IOptions<MongoSettings> setting)
     {
         _logger = logger;
         _context = context;
+        _mongoSettings = setting.Value;
+    }
+    private MongoClient GetClient()
+    {
+        if (_client == null)
+        {
+            // network compression options:
+            // reduces the amount of data passed over the network between mongodb & app.
+            // var uri = $"{options.Value.ConnectionString}?compressors=snappy,zlib,zstd";
+            // var settings = MongoClientSettings.FromConnectionString(uri);
+
+            var settings = MongoClientSettings.FromConnectionString(_mongoSettings.ConnectionString);
+            settings.UseTls = _mongoSettings.UseTls;
+            settings.MaxConnecting = _mongoSettings.MaxConnecting;
+            settings.MinConnectionPoolSize = _mongoSettings.MinConnectionPoolSize;
+            settings.MaxConnectionPoolSize = _mongoSettings.MaxConnectionPoolSize;
+            settings.MaxConnectionLifeTime = TimeSpan.FromMinutes(_mongoSettings.MaxConnectionLifeTime);
+            settings.WaitQueueTimeout = TimeSpan.FromSeconds(_mongoSettings.WaitQueTimeout);
+            settings.RetryWrites = _mongoSettings.RetryWrites;
+            settings.RetryWrites = _mongoSettings.RetryReads;
+            settings.WriteConcern = WriteConcern.WMajority;
+            settings.ReadConcern = ReadConcern.Majority;
+
+            _client = new MongoClient(settings);
+        }
+        return _client;
+    }
+    private IMongoDatabase GetDatabase(string indexInfo)
+    {
+        return GetClient().GetDatabase(indexInfo);
+    }
+    private IMongoCollection<T> GetCollection<T>(string? name = null!)
+    {
+        name = name ?? typeof(T).Name.ToLower();
+        return GetDatabase(_mongoSettings.DatabaseName).GetCollection<T>(name.ToLower());
     }
 
     public async Task<List<T>> GetAllAsync<T>() where T : class
     {
         try
         {
-            var collection = _context.GetCollection<T>();
+            var collection = GetCollection<T>();
             var response = await collection.Find(_ => true).ToListAsync();
             _logger.LogInformation($"Retrieved all entities of type {typeof(T).FullName}, count: {response.Count}");
             return response;
@@ -40,8 +80,15 @@ public class DatabaseContext : IDatabaseContext
     {
         try
         {
-            var collection = _context.GetCollection<T>();
-            await collection.InsertOneAsync(entity);
+            var collection = GetCollection<T>();
+            if (_session != null)
+            {
+                await collection.InsertOneAsync(_session, entity);
+            }
+            else
+            {
+                await collection.InsertOneAsync(entity);
+            }
             _logger.LogInformation($"Added entity of type {typeof(T).FullName} with Id {entity.Id}");
             return true;
         }
@@ -56,7 +103,7 @@ public class DatabaseContext : IDatabaseContext
     {
         try
         {
-            var collection = _context.GetCollection<T>();
+            var collection = GetCollection<T>();
             var result = await collection.ReplaceOneAsync(o => o.Id == entity.Id, entity);
             var success = result.IsAcknowledged && result.ModifiedCount > 0;
             if (success)
@@ -80,12 +127,12 @@ public class DatabaseContext : IDatabaseContext
     {
         try
         {
-            var collection = _context.GetCollection<T>();
+            var collection = GetCollection<T>();
             await collection.DeleteOneAsync(o => o.Id.Equals(entity.Id));
             _logger.LogInformation($"Deleted entity of type {typeof(T).FullName} with Id {entity.Id}");
             return true;
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
             _logger.LogError($"DeleteAsync failed for type {typeof(T).FullName} with Id {entity.Id}");
             return false;
@@ -96,7 +143,7 @@ public class DatabaseContext : IDatabaseContext
     {
         try
         {
-            var collection = _context.GetCollection<T>();
+            var collection = GetCollection<T>();
             var ids = entities.Select(e => e.Id);
             var result = await collection.DeleteManyAsync(
                 Builders<T>.Filter.In(x => x.Id, ids)
@@ -116,7 +163,7 @@ public class DatabaseContext : IDatabaseContext
 
     public async Task<T?> GetItemByConditionAsync<T>(Expression<Func<T, bool>> criteria) where T : BaseEntity
     {
-        var collection = _context.GetCollection<T>();
+        var collection = GetCollection<T>();
         var filter = Builders<T>.Filter.Where(criteria);
         var response = await collection.Find(filter).FirstOrDefaultAsync();
         return response;
@@ -124,17 +171,17 @@ public class DatabaseContext : IDatabaseContext
 
     public async Task<List<T>?> GetItemsByConditionAsync<T>(Expression<Func<T, bool>> criteria) where T : BaseEntity
     {
-        var collection = _context.GetCollection<T>();
+        var collection = GetCollection<T>();
         var filter = Builders<T>.Filter.Where(criteria);
         var results = await collection
             .Find(filter)
             .ToListAsync();   // fetch all matching documents
         return results;
     }
-    
+
     public async Task<long> CountAsync<T>(Expression<Func<T, bool>> criteria) where T : class
     {
-        var collection = _context.GetCollection<T>();
+        var collection = GetCollection<T>();
         var filter = Builders<T>.Filter.Where(criteria);
         // optional
         var options = new CountOptions
@@ -150,7 +197,7 @@ public class DatabaseContext : IDatabaseContext
                                                  Expression<Func<T, object>>? orderBy = null,
                                                  bool ascending = true)
     {
-        var collection = _context.GetCollection<T>();
+        var collection = GetCollection<T>();
         var filter = criteria != null ? Builders<T>.Filter.Where(criteria) : Builders<T>.Filter.Empty;
 
         var query = collection.Find(filter);
@@ -175,7 +222,7 @@ public class DatabaseContext : IDatabaseContext
     {
         try
         {
-            var collection = _context.GetCollection<T>();
+            var collection = GetCollection<T>();
             await collection.DeleteOneAsync(o => o.Id.Equals(id));
             _logger.LogInformation($"Deleted entity of type {typeof(T).FullName} with Id {id}");
             return true;
@@ -197,7 +244,7 @@ public class DatabaseContext : IDatabaseContext
     {
         try
         {
-            var collection = _context.GetCollection<T>();
+            var collection = GetCollection<T>();
 
             // Build the filter
             var filterBuilder = Builders<T>.Filter;
@@ -259,6 +306,95 @@ public class DatabaseContext : IDatabaseContext
             _logger.LogError(ex,
                 $"GetCursorPagedResponseAsync failed for type {typeof(T).FullName}");
             return (new List<T>(), null);
+        }
+    }
+
+    /// <summary>
+    /// /// <summary>
+    /// Begin a transaction
+    /// </summary>
+    public IDatabaseContext BeginTransaction()
+    {
+        try
+        {
+            if (_session != null)
+            {
+                throw new InvalidOperationException("A transaction is already in progress.");
+            }
+            _session = GetClient().StartSession();
+            _session.StartTransaction();
+
+            _logger.LogInformation("Transaction started");
+            return this;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "BeginTransaction failed");
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Commit transaction
+    /// </summary>
+    public async Task CommitTransactionAsync()
+    {
+        try
+        {
+            if (_session == null)
+            {
+                throw new InvalidOperationException("No active transaction to commit.");
+            }
+            await _session.CommitTransactionAsync();
+            _logger.LogInformation("Transaction committed");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "CommitTransactionAsync failed");
+            throw;
+        }
+        finally
+        {
+            _session?.Dispose();
+            _session = null;
+        }
+    }
+    /// <summary>
+    /// Rollback transaction
+    /// </summary>
+    public async Task AbortTransactionAsync()
+    {
+        try
+        {
+            if (_session == null)
+            {
+                throw new InvalidOperationException("No active transaction to abort.");
+            }
+            await _session.AbortTransactionAsync();
+            _logger.LogInformation("Transaction aborted");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "AbortTransactionAsync failed");
+            throw;
+        }
+        finally
+        {
+            _session?.Dispose();
+            _session = null;
+        }
+    }
+
+    /// <summary>
+    /// Dispose resources
+    /// </summary>
+    public void Dispose()
+    {
+        if (_session != null)
+        {
+            _session.CommitTransaction();
+            _session.Dispose();
+            _session = null;
         }
     }
     /*

@@ -13,4 +13,6 @@ public class Class : BaseEntity
     public List<string> TeacherIds { get; set; } = new();
     public List<string> StudentIds { get; set; } = new();
     public bool IsActive { get; set; } = true;
+
+    public string GetId() => Id;
 }

@@ -1,4 +1,5 @@
 ﻿
+using Application.Common.Interfaces.Persistence;
 using Domain.Entities;
 using Domain.Repositories.Base;
 using Infrastructure.Persistence;
@@ -8,8 +9,8 @@ namespace Infrastructure.Repositories.Base;
 
 public class Repository : IRepository
 {
-    protected readonly DatabaseContext DbContext;
-    public Repository(DatabaseContext dbContext)
+    protected readonly IDatabaseContext DbContext;
+    public Repository(IDatabaseContext dbContext)
     {
         DbContext = dbContext;
     }

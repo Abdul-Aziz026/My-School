@@ -6,9 +6,9 @@ using Infrastructure.Repositories.Base;
 
 namespace Infrastructure.Repositories;
 
-public class SubjectRepository : Repository, ISubjectRepository
+public class StudentRepository : Repository, IStudentRepository
 {
-    public SubjectRepository(IDatabaseContext dbContext) : base(dbContext)
+    public StudentRepository(IDatabaseContext dbContext) : base(dbContext)
     {
     }
 }

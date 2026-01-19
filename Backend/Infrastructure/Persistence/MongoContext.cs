@@ -5,6 +5,7 @@ using MongoDB.Driver;
 
 namespace Infrastructure.Persistence;
 
+[Obsolete("MongoContext is deprecated. Don't use it.")]
 public class MongoContext : IMongoContext
 {
     private readonly IMongoDatabase _database;
@@ -33,14 +34,11 @@ public class MongoContext : IMongoContext
         _database = _client.GetDatabase(options.Value.DatabaseName);
     }
 
+
+
     public IMongoCollection<T> GetCollection<T>(string name = null!)
     {
         name = name ?? typeof(T).Name.ToLower();
         return _database.GetCollection<T>(name.ToLower());
-    }
-
-    public Task<IClientSessionHandle> StartSessionAsync()
-    {
-        return _client.StartSessionAsync();
     }
 }

@@ -1,13 +1,10 @@
-﻿using Application.Common.Interfaces.Repositories;
+﻿using Application.Common.Interfaces.Persistence;
+using Application.Common.Interfaces.Repositories;
 using Domain.Entities;
-using Infrastructure.Persistence;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Infrastructure.Repositories;
 
-public class RefreshTokenRepository(DatabaseContext Context) : IRefreshTokenRepository
+public class RefreshTokenRepository(IDatabaseContext Context) : IRefreshTokenRepository
 {
     public async Task AddAsync(UserRefreshToken token)
     {

@@ -1,4 +1,5 @@
-﻿using Application.Common.Interfaces.Repositories;
+﻿using Application.Common.Interfaces.Persistence;
+using Application.Common.Interfaces.Repositories;
 using Domain.Entities;
 using Infrastructure.Persistence;
 using Infrastructure.Repositories.Base;
@@ -11,7 +12,7 @@ namespace Infrastructure.Repositories;
 public class UserRepository : Repository, IUserRepository
 {
     private readonly IRefreshTokenRepository _refreshTokenRepository;
-    public UserRepository(DatabaseContext dbContext, IRefreshTokenRepository repo) : base(dbContext) 
+    public UserRepository(IDatabaseContext dbContext, IRefreshTokenRepository repo) : base(dbContext) 
     {
         _refreshTokenRepository = repo;
     }

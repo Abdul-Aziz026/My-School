@@ -1,6 +1,5 @@
 ﻿using Application.Common.Interfaces.Persistence;
 using Application.Settings;
-using Infrastructure.Helper;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 
@@ -9,6 +8,7 @@ namespace Infrastructure.Persistence;
 public class MongoContext : IMongoContext
 {
     private readonly IMongoDatabase _database;
+    private readonly IMongoClient _client;
 
     public MongoContext(IOptions<MongoSettings> options)
     {
@@ -29,13 +29,18 @@ public class MongoContext : IMongoContext
         settings.WriteConcern = WriteConcern.WMajority;
         settings.ReadConcern = ReadConcern.Majority;
 
-        IMongoClient client = new MongoClient(settings);
-        _database = client.GetDatabase(options.Value.DatabaseName);
+        _client = new MongoClient(settings);
+        _database = _client.GetDatabase(options.Value.DatabaseName);
     }
 
     public IMongoCollection<T> GetCollection<T>(string name = null!)
     {
         name = name ?? typeof(T).Name.ToLower();
         return _database.GetCollection<T>(name.ToLower());
+    }
+
+    public Task<IClientSessionHandle> StartSessionAsync()
+    {
+        return _client.StartSessionAsync();
     }
 }

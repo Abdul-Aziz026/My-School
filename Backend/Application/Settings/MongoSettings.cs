@@ -65,3 +65,8 @@ public class MongoSettings
     /// </summary>
     public bool RetryReads { get; set; } = false;
 }
+
+
+/*
+ * add the settings reference: todo
+ * */

@@ -10,7 +10,7 @@ using System.Threading;
 
 namespace Infrastructure.Persistence;
 
-public class DatabaseContext
+public class DatabaseContext : IDatabaseContext
 {
     private readonly IMongoContext _context;
     private readonly ILogger<DatabaseContext> _logger;
@@ -136,7 +136,12 @@ public class DatabaseContext
     {
         var collection = _context.GetCollection<T>();
         var filter = Builders<T>.Filter.Where(criteria);
-        return await collection.CountDocumentsAsync(filter);
+        // optional
+        var options = new CountOptions
+        {
+            Hint = "_id_"
+        };
+        return await collection.CountDocumentsAsync(filter, options);
     }
 
     public async Task<List<T>> GetPagedResponseAsync<T>(Expression<Func<T, bool>>? criteria = null,
@@ -181,4 +186,88 @@ public class DatabaseContext
             return false;
         }
     }
+
+
+    public async Task<(List<T>, string)> GetCursorPagedResponseAsync<T>(
+        string? lastId = null,
+        int pageSize = 10,
+        Expression<Func<T, bool>>? criteria = null,
+        bool ascending = true,
+        CancellationToken cancellationToken = default) where T : BaseEntity
+    {
+        try
+        {
+            var collection = _context.GetCollection<T>();
+
+            // Build the filter
+            var filterBuilder = Builders<T>.Filter;
+            var filters = new List<FilterDefinition<T>>();
+
+            // Add user criteria if provided
+            if (criteria != null)
+            {
+                filters.Add(filterBuilder.Where(criteria));
+            }
+
+            // Add cursor filter based on lastId
+            if (!string.IsNullOrEmpty(lastId))
+            {
+                var idFilter = ascending
+                    ? filterBuilder.Gt(x => x.Id, lastId)
+                    : filterBuilder.Lt(x => x.Id, lastId);
+                filters.Add(idFilter);
+            }
+
+            // Combine filters
+            var finalFilter = filters.Count > 0
+                ? filterBuilder.And(filters)
+                : filterBuilder.Empty;
+
+            // Build sort definition - always sort by Id for cursor-based pagination
+            var sortDefinition = ascending
+                ? Builders<T>.Sort.Ascending(x => x.Id)
+                : Builders<T>.Sort.Descending(x => x.Id);
+
+            // Execute query - fetch pageSize + 1 to determine if there are more items
+            var items = await collection
+                .Find(finalFilter)
+                .Sort(sortDefinition)
+                .Limit(pageSize + 1)
+                .ToListAsync();
+
+            // Determine next cursor
+            string nextCursor = null;
+            bool hasMore = items.Count > pageSize;
+
+            if (hasMore)
+            {
+                // Remove the extra item
+                items.RemoveAt(pageSize);
+
+                // Get the Id of the last item as the next cursor
+                nextCursor = items[^1].Id;
+            }
+
+            _logger.LogInformation(
+                $"Retrieved cursor-based page for type {typeof(T).FullName}, " +
+                $"count: {items.Count}, hasMore: {hasMore}, nextCursor: {nextCursor}");
+
+            return (items, nextCursor);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex,
+                $"GetCursorPagedResponseAsync failed for type {typeof(T).FullName}");
+            return (new List<T>(), null);
+        }
+    }
+    /*
+// With criteria
+var (filtered, cursor) = await database.GetCursorPagedResponseAsync<Product, object>(
+    lastId: null,
+    pageSize: 20,
+    criteria: p => p.IsActive == true,
+    cancellationToken: cancellationToken
+);
+     */
 }

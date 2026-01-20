@@ -202,7 +202,7 @@ public class DatabaseContext : IDatabaseContext, IDisposable
 
         var query = collection.Find(filter);
 
-        if (orderBy != null)
+        if (orderBy is not null)
         {
             var sortDefinition = ascending
                 ? Builders<T>.Sort.Ascending(orderBy)
@@ -324,7 +324,7 @@ public class DatabaseContext : IDatabaseContext, IDisposable
             _session = GetClient().StartSession();
             _session.StartTransaction();
 
-            _logger.LogInformation("Transaction started");
+            _logger.LogInformation("Transaction started.");
             return this;
         }
         catch (Exception ex)

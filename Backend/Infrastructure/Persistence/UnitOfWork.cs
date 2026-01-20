@@ -19,7 +19,7 @@ public class UnitOfWork : IUnitOfWork
         _indexInfo = option.Value.DatabaseName;
     }
 
-    public async Task BeginTransactionAsync()
+    public async Task StartTransactionAsync()
     {
         _transactionContext = _dbContext.BeginTransaction();
         await Task.CompletedTask;

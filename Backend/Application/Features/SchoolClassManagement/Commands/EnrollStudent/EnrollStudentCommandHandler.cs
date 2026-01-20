@@ -34,14 +34,15 @@ public class EnrollStudentCommandHandler : IRequestHandler<EnrollStudentCommand,
     }
     public async Task<EnrollStudentResponseDto> Handle(EnrollStudentCommand command, CancellationToken cancellationToken)
     {
-        var student = await _studentRepository.GetItemByConditionAsync<Student>(x => x.Id == command.StudentId);
-
-        if (student == null)
+        Expression<Func<Student, bool>> filter = x => x.Id == command.StudentId;
+        var student = await _studentRepository.GetItemByConditionAsync<Student>(filter);
+        if (student is null)
         {
             throw new ArgumentException("Student not found");
         }
+
         // Start transaction (Enrollment + Payment must succeed together)
-        await _unitOfWork.BeginTransactionAsync();
+        await _unitOfWork.StartTransactionAsync();
         try
         {
             // 1. Create Enrollment

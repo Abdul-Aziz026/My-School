@@ -4,10 +4,13 @@ using Application.Common.Interfaces.Repositories;
 using Application.Common.Interfaces.Services;
 using Domain.Interfaces;
 using Domain.Repositories.Base;
+using Infrastructure.DataMigrations;
+using Infrastructure.DataMigrations.IndexDefinitions.Base;
 using Infrastructure.Persistence;
 using Infrastructure.Repositories;
 using Infrastructure.Repositories.Base;
 using Infrastructure.Services;
+using System.Reflection;
 
 namespace API.Extensions;
 
@@ -15,9 +18,13 @@ public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddApplicationServices(this IServiceCollection services)
     {
+        // Register Index Definition Providers
+        RegisterIndexDefinitionProviders(services);
+
         // Database 
         services.AddSingleton<IMongoContext, MongoContext>();
         services.AddSingleton<IDatabaseContext, DatabaseContext>();
+        services.AddSingleton<IDatabaseIndexInitializer, DatabaseIndexInitializer>();
         services.AddSingleton<IAuditService, AuditService>();
 
         // unit of work
@@ -46,5 +53,21 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ICacheService, CacheService>();
 
         return services;
+    }
+
+    private static void RegisterIndexDefinitionProviders(IServiceCollection services)
+    {
+        var assembly = Assembly.GetExecutingAssembly();
+
+        var providerTypes = assembly.GetTypes()
+            .Where(type =>
+                typeof(IIndexDefinitionProvider).IsAssignableFrom(type) &&
+                type.IsClass &&
+                !type.IsAbstract);
+
+        foreach (var type in providerTypes)
+        {
+            services.AddSingleton(typeof(IIndexDefinitionProvider), type);
+        }
     }
 }

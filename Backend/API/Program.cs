@@ -1,5 +1,6 @@
 using API.Extensions;
 using API.MiddleWare;
+using Infrastructure.Extensions;
 using Infrastructure.Helper;
 using Scalar.AspNetCore;
 using Serilog;
@@ -30,6 +31,9 @@ builder.Services.AddJwtAuthentication();
 builder.Services.AddApplicationServices();
 
 var app = builder.Build();
+
+// Initialize database indexes
+await app.Services.InitializeDatabaseAsync();
 
 // Use "GlobalLimiter" as rate limiting middleware globally 1000 requests per minute...
 app.UseRateLimiter();

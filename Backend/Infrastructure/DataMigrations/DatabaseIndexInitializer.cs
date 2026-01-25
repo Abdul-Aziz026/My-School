@@ -1,98 +1,107 @@
 ﻿
 using Application.Common.Interfaces.Persistence;
-using Microsoft.Extensions.DependencyInjection;
+using Infrastructure.DataMigrations.IndexDefinitions.Base;
+using Infrastructure.DataMigrations.Models;
 using MongoDB.Bson;
 using MongoDB.Driver;
-using StackExchange.Redis;
 
 namespace Infrastructure.DataMigrations;
 
-public class DatabaseIndexInitializer(IDatabaseContext context)
+public class DatabaseIndexInitializer : IDatabaseIndexInitializer
 {
+    private readonly IDatabaseContext _context;
+    private readonly IEnumerable<IIndexDefinitionProvider> _indexDefinitionProviders;
+    private readonly IMongoCollection<IndexMigration> indexMigrationsCollection;
+    
+    public DatabaseIndexInitializer(
+        IDatabaseContext context,
+        IEnumerable<IIndexDefinitionProvider> indexDefinitionProviders)
+    {
+        _context = context;
+        indexMigrationsCollection = _context.GetCollection<IndexMigration>("indexmigration");
+        _indexDefinitionProviders = indexDefinitionProviders;
+    }
     public async Task InitializeIndexesAsync()
     {
-        // Implementation for initializing database indexes goes here.
-        var indexDefinitions = GetIndexDefinitions();
+        var skipCount = 0;
+        var processedCount = 0;
 
-
-
-
-        // This could involve checking existing indexes and creating new ones as needed.
+        foreach (var provider in _indexDefinitionProviders)
+        {
+            var allIndexDefinitions = _indexDefinitionProviders
+                .SelectMany(p => p.GetIndexDefinitions())
+                .OrderBy(idx => idx.Version).ToList();
+            foreach (var indexDef in allIndexDefinitions)
+            {
+                var isApplied = await IndexMigrationAppliedAsync(indexDef);
+                if (!isApplied)
+                {
+                    if (indexDef.Action == IndexAction.Create)
+                    {
+                        await CreateIndexAsync(indexDef);
+                    }
+                    else if (indexDef.Action == IndexAction.Remove)
+                    {
+                        await DropIndexAsync(indexDef);
+                    }
+                    await RecordIndexMigrationAsync(indexDef);
+                    processedCount++;
+                }
+                else {
+                    skipCount++;
+                }
+            }
+        }
     }
 
-    private async Task CreateIndexAsync(IndexDefinition indexDefinition)
+    private async Task RecordIndexMigrationAsync(IndexDefinition indexDef)
+    {
+        var migrationRecord = new IndexMigration
+        {
+            Version = indexDef.Version,
+            CollectionName = indexDef.CollectionName,
+            IndexName = indexDef.IndexName,
+            AppliedAt = DateTime.UtcNow
+        };
+        await indexMigrationsCollection.InsertOneAsync(migrationRecord);
+    }
+
+    private async Task CreateIndexAsync(IndexDefinition indexDef)
     {
         try
         {
-            var collection = context.GetCollection<BsonDocument>(indexDefinition.CollectionName);
-            await collection.Indexes.CreateOneAsync(indexDefinition.IndexModel);
-            Console.WriteLine($"✓ Created index '{indexDefinition.IndexName}' on collection '{indexDefinition.CollectionName}' (Version: {indexDef.Version})");
+            var collection = _context.GetCollection<BsonDocument>(indexDef.CollectionName);
+            await collection.Indexes.CreateOneAsync(indexDef.IndexModel);
+            Console.WriteLine($"✓ Created index '{indexDef.IndexName}' on collection '{indexDef.CollectionName}' (Version: {indexDef.Version})");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"✗ Failed to create index '{indexDefinition.IndexName}': {ex.Message}");
+            Console.WriteLine($"✗ Failed to create index '{indexDef.IndexName}': {ex.Message}");
             throw;
         }
     }
 
-    private async Task DropIndexAsync(IndexDefinition indexDefinition)
+    private async Task DropIndexAsync(IndexDefinition indexDef)
     {
         try
         {
-            var collection = context.GetCollection<BsonDocument>(indexDefinition.CollectionName);
-            await collection.Indexes.DropOneAsync(indexDefinition.IndexName);
-
-            Console.WriteLine($"✓ Removed index '{indexDefinition.IndexName}' from collection '{indexDefinition.CollectionName}' (Version: {indexDef.Version})");
+            var collection = _context.GetCollection<BsonDocument>(indexDef.CollectionName);
+            await collection.Indexes.DropOneAsync(indexDef.IndexName);
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"⚠ Index '{indexDefinition.IndexName}' not removed. Error message: {ex.Message}");
+            Console.WriteLine($"⚠ Index '{indexDef.IndexName}' not removed. Error message: {ex.Message}");
         }
     }
 
-
-    private List<IndexDefinition> GetIndexDefinitions()
+    private async Task<bool> IndexMigrationAppliedAsync(IndexDefinition indexDef)
     {
-        // Implementation for retrieving index definitions goes here.
-        return new List<IndexDefinition>() {
-            new IndexDefinition()
-            {
-                Version = "1.0.0",
-                CollectionName = "Users",
-                IndexName = "idx_users_email",
-                Action = IndexAction.Create,
-                IndexModel = new CreateIndexModel<BsonDocument>(
-                    Builders<BsonDocument>.IndexKeys.Ascending("Email"),
-                    new CreateIndexOptions { Name = "idx_users_email", Unique = true }
-                )
-            },
-        // Version 1.1.0 - Add compound index
-            new IndexDefinition
-            {
-                Version = "1.1.0",
-                CollectionName = "Orders",
-                IndexName = "idx_orders_userId_status",
-                Action = IndexAction.Create,
-                IndexModel = new CreateIndexModel<BsonDocument>(
-                    Builders<BsonDocument>.IndexKeys
-                            .Ascending("UserId")
-                            .Ascending("Status"),
-                            new CreateIndexOptions { 
-                                Name = "idx_orders_userId_status" 
-                            }
-                )
-            }
-        };
-    }
-}
-
-// Extension method for easy registration in Startup.cs
-public static class MongoIndexInitializerExtensions
-{
-    public static async Task InitializeMongoIndexesAsync(this IServiceProvider serviceProvider)
-    {
-        var context = serviceProvider.GetRequiredService<IDatabaseContext>();
-        var initializer = new DatabaseIndexInitializer(context);
-        await initializer.InitializeIndexesAsync();
+        var filter = Builders<IndexMigration>.Filter.And(
+            Builders<IndexMigration>.Filter.Eq(im => im.Version, indexDef.Version),
+            Builders<IndexMigration>.Filter.Eq(im => im.CollectionName, indexDef.CollectionName),
+            Builders<IndexMigration>.Filter.Eq(im => im.IndexName, indexDef.IndexName)
+        );
+        var count = await indexMigrationsCollection.CountDocumentsAsync(filter);
+        return count > 0;
     }
 }

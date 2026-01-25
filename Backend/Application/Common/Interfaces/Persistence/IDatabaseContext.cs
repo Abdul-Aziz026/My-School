@@ -1,10 +1,12 @@
 ﻿using Domain.Entities;
+using MongoDB.Driver;
 using System.Linq.Expressions;
 
 namespace Application.Common.Interfaces.Persistence;
 
 public interface IDatabaseContext
 {
+    public IMongoCollection<T> GetCollection<T>(string? name = null);
     // CRUD Operations
     /// <summary>
     /// Retrieves all entities of type T from the database

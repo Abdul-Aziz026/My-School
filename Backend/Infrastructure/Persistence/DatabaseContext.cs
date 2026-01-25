@@ -2,7 +2,6 @@
 using Application.Common.Interfaces.Persistence;
 using Application.Settings;
 using Domain.Entities;
-using MassTransit.Caching.Internals;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
@@ -54,7 +53,7 @@ public class DatabaseContext : IDatabaseContext, IDisposable
     {
         return GetClient().GetDatabase(indexInfo);
     }
-    private IMongoCollection<T> GetCollection<T>(string? name = null!)
+    public IMongoCollection<T> GetCollection<T>(string? name = null!)
     {
         name = name ?? typeof(T).Name.ToLower();
         return GetDatabase(_mongoSettings.DatabaseName).GetCollection<T>(name.ToLower());

@@ -51,23 +51,36 @@ public static class ServiceCollectionExtensions
 
         // register cache service
         services.AddScoped<ICacheService, CacheService>();
-
+        
         return services;
     }
+    // sikho app
+    // whats app:
+    // 01345381211
 
     private static void RegisterIndexDefinitionProviders(IServiceCollection services)
     {
-        var assembly = Assembly.GetExecutingAssembly();
+        services.AddSingleton<IIndexDefinitionProvider, StudentIndexDefinitions>();
+        //var assembly = Assembly.GetExecutingAssembly();
 
-        var providerTypes = assembly.GetTypes()
-            .Where(type =>
-                typeof(IIndexDefinitionProvider).IsAssignableFrom(type) &&
-                type.IsClass &&
-                !type.IsAbstract);
+        //var providerTypes = assembly.GetTypes()
+        //    .Where(type =>
+        //        typeof(IIndexDefinitionProvider).IsAssignableFrom(type) &&
+        //        type.IsClass &&
+        //        !type.IsAbstract &&
+        //        type != typeof(BaseIndexDefinitionProvider)) // Exclude base class
+        //    .ToList();
 
-        foreach (var type in providerTypes)
-        {
-            services.AddSingleton(typeof(IIndexDefinitionProvider), type);
-        }
+        //Console.WriteLine($"Found {providerTypes.Count} index definition providers to register:");
+
+        //foreach (var type in providerTypes)
+        //{
+        //    services.AddSingleton(typeof(IIndexDefinitionProvider), type);
+        //    Console.WriteLine($"  ✓ Registered: {type.Name}");
+        //}
+        //if (providerTypes.Count == 0)
+        //{
+        //    Console.WriteLine("  ⚠ WARNING: No index definition providers found!");
+        //}
     }
 }

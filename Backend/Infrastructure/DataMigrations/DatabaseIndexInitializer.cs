@@ -2,6 +2,7 @@
 using Application.Common.Interfaces.Persistence;
 using Infrastructure.DataMigrations.IndexDefinitions.Base;
 using Infrastructure.DataMigrations.Models;
+using Microsoft.Extensions.Logging;
 using MongoDB.Bson;
 using MongoDB.Driver;
 
@@ -12,14 +13,18 @@ public class DatabaseIndexInitializer : IDatabaseIndexInitializer
     private readonly IDatabaseContext _context;
     private readonly IEnumerable<IIndexDefinitionProvider> _indexDefinitionProviders;
     private readonly IMongoCollection<IndexMigration> indexMigrationsCollection;
+    private readonly ILogger<DatabaseIndexInitializer> _logger;
     
     public DatabaseIndexInitializer(
         IDatabaseContext context,
-        IEnumerable<IIndexDefinitionProvider> indexDefinitionProviders)
+        IEnumerable<IIndexDefinitionProvider> indexDefinitionProviders,
+        ILogger<DatabaseIndexInitializer> logger
+        )
     {
         _context = context;
         indexMigrationsCollection = _context.GetCollection<IndexMigration>("indexmigration");
         _indexDefinitionProviders = indexDefinitionProviders;
+        _logger = logger;
     }
     public async Task InitializeIndexesAsync()
     {
@@ -52,6 +57,7 @@ public class DatabaseIndexInitializer : IDatabaseIndexInitializer
                 }
             }
         }
+        _logger.LogInformation($"{processedCount} {skipCount}")
     }
 
     private async Task RecordIndexMigrationAsync(IndexDefinition indexDef)

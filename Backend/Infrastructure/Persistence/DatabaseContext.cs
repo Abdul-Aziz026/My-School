@@ -34,7 +34,7 @@ public class DatabaseContext : IDatabaseContext, IDisposable
             // var settings = MongoClientSettings.FromConnectionString(uri);
 
             var settings = MongoClientSettings.FromConnectionString(_mongoSettings.ConnectionString);
-            settings.UseTls = _mongoSettings.UseTls;
+            //settings.UseTls = _mongoSettings.UseTls;
             settings.MaxConnecting = _mongoSettings.MaxConnecting;
             settings.MinConnectionPoolSize = _mongoSettings.MinConnectionPoolSize;
             settings.MaxConnectionPoolSize = _mongoSettings.MaxConnectionPoolSize;

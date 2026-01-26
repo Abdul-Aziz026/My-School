@@ -19,6 +19,73 @@ public class StudentsController : Controller
     }
 
     /// <summary>
+    /// Creates a new student record
+    /// </summary>
+    [HttpPost]
+    [ProducesResponseType(typeof(CreateStudentResponseDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> CreateStudent([FromBody] CreateStudentDto requestDto)
+    {
+        if (!ModelState.IsValid)
+        {
+            var errorList = ModelState.Values
+                .SelectMany(v => v.Errors)
+                .Select(m => m.ErrorMessage)
+                .ToList();
+            return BadRequest(new { Errors = errorList });
+        }
+
+        var command = requestDto.ToCreateStudentCommand();
+        var responseId = await _messageBus.SendAsync<CreateStudentCommand, string>(command);
+
+        return CreatedAtAction(
+            nameof(GetStudentById),
+            new { id = responseId },
+            new { Id = responseId }
+        );
+    }
+
+    /// <summary>
+    /// Gets all students with optional pagination and filtering
+    /// </summary>
+    [HttpGet]
+    [ProducesResponseType(typeof(PagedResult<StudentResponseDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetStudents([FromQuery] GetStudentsQueryDto queryDto)
+    {
+        var query = new GetStudentsQuery
+        {
+            Page = queryDto.Page ?? 1,
+            PageSize = queryDto.PageSize ?? 10,
+            Search = queryDto.Search,
+            GradeLevel = queryDto.GradeLevel,
+            ClassId = queryDto.ClassId,
+            IsActive = queryDto.IsActive
+        };
+
+        var result = await _messageBus.SendAsync<GetStudentsQuery, PagedResult<StudentResponseDto>>(query);
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// Gets a specific student by ID
+    /// </summary>
+    [HttpGet("{id}")]
+    [ProducesResponseType(typeof(StudentDetailResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetStudentById(string id)
+    {
+        var query = new GetStudentByIdQuery { Id = id };
+        var result = await _messageBus.SendAsync<GetStudentByIdQuery, StudentDetailResponseDto>(query);
+
+        if (result == null)
+        {
+            return NotFound(new { Message = $"Student with ID '{id}' not found." });
+        }
+
+        return Ok(result);
+    }
+
+    /// <summary>
     /// Enrolls a student in a class
     /// </summary>
     /// <returns>Enrollment ID</returns>
@@ -41,6 +108,58 @@ public class StudentsController : Controller
         // Client can query student's classes to see full details
         return CreatedAtAction("Enrolled", enrolledResponse);
     }
+
+    /// <summary>
+    /// Updates an existing student
+    /// </summary>
+    [HttpPut("{id}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> UpdateStudent(string id, [FromBody] UpdateStudentDto requestDto)
+    {
+        if (!ModelState.IsValid)
+        {
+            var errorList = ModelState.Values
+                .SelectMany(v => v.Errors)
+                .Select(m => m.ErrorMessage)
+                .ToList();
+            return BadRequest(new { Errors = errorList });
+        }
+
+        var command = new UpdateStudentCommand
+        {
+            Id = id,
+            FirstName = requestDto.FirstName,
+            LastName = requestDto.LastName,
+            Email = requestDto.Email,
+            PhoneNumber = requestDto.PhoneNumber,
+            DateOfBirth = requestDto.DateOfBirth,
+            GradeLevel = requestDto.GradeLevel,
+            Address = requestDto.Address,
+            GuardianName = requestDto.GuardianName,
+            GuardianPhone = requestDto.GuardianPhone,
+            GuardianEmail = requestDto.GuardianEmail,
+            IsActive = requestDto.IsActive
+        };
+
+        await _messageBus.SendAsync<UpdateStudentCommand, bool>(command);
+        return NoContent();
+    }
+    
+    /// <summary>
+    /// Deletes a student (soft delete)
+    /// </summary>
+    [HttpDelete("{id}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DeleteStudent(string id)
+    {
+        var command = new DeleteStudentCommand { Id = id };
+        await _messageBus.SendAsync<DeleteStudentCommand, bool>(command);
+        return NoContent();
+    }
+
 
     /// <summary>
     /// Unenrolls a student from a class

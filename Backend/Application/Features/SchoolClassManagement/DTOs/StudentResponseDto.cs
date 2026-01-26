@@ -3,11 +3,14 @@ using Domain.Entities;
 
 namespace Application.Features.SchoolClassManagement.DTOs;
 
-public class StudentResponseDto
+public sealed class StudentResponseDto
 {
-    public string Name { get; set; } = string.Empty;
-    public int Grade { get; set; }
-    public string Section { get; set; } = string.Empty;
+    public string Id { get; init; } = default!;
+    public string Name { get; init; } = default!;
+    public string StudentNumber { get; init; } = default!;
+    public int Grade { get; init; }
+    public string Section { get; init; } = default!;
+    public StudentStatus Status { get; init; }
 }
 
 public static class StudentResponseDtoExtentions
@@ -16,9 +19,12 @@ public static class StudentResponseDtoExtentions
     {
         return new StudentResponseDto
         {
+            Id = student.Id,
+            StudentNumber = student.StudentNumber,
             Name = student.Name,
             Grade = student.Grade,
-            Section = student.Section
+            Section = student.Section,
+            Status = student.Status
         };
     }
 }

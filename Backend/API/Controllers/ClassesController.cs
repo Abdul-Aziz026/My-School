@@ -44,7 +44,11 @@ public class ClassesController : Controller
     {
         var command = dto.ToCreateClassCommand();
         var responseId = await _messageBus.SendAsync<CreateClassCommand, string>(command);
-        return CreatedAtAction(nameof(GetClassById), new { id = responseId }, new { Id = responseId });
+        return CreatedAtAction(
+            nameof(GetClassById),
+            new { id = responseId },
+            new { Id = responseId }
+        );
     }
 
     /// <summary>

@@ -317,26 +317,6 @@ public class GetTeachersQueryDto
 }
 
 /// <summary>
-/// Response DTO for teacher in list views
-/// </summary>
-public class TeacherResponseDto
-{
-    public string Id { get; set; } = string.Empty;
-    public string FirstName { get; set; } = string.Empty;
-    public string LastName { get; set; } = string.Empty;
-    public string FullName => $"{FirstName} {LastName}";
-    public string Email { get; set; } = string.Empty;
-    public string? PhoneNumber { get; set; }
-    public string? Department { get; set; }
-    public string? Specialization { get; set; }
-    public bool IsActive { get; set; }
-    public int ClassCount { get; set; }
-    public int SubjectCount { get; set; }
-    public DateTime HireDate { get; set; }
-    public DateTime CreatedAt { get; set; }
-}
-
-/// <summary>
 /// Detailed response DTO for individual teacher view
 /// </summary>
 public class TeacherDetailResponseDto

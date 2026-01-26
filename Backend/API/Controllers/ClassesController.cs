@@ -1,10 +1,13 @@
-﻿
 using Application.Common.Interfaces.Publisher;
 using Application.Features.SchoolClassManagement.Commands.CreateClass;
 using Application.Features.SchoolClassManagement.Commands.DeleteClass;
 using Application.Features.SchoolClassManagement.Commands.UpdateClass;
+using Application.Features.SchoolClassManagement.Commands.AssignTeacher;
+using Application.Features.SchoolClassManagement.Commands.RemoveTeacher;
 using Application.Features.SchoolClassManagement.Queries.GetClassStudents;
 using Application.Features.SchoolClassManagement.Queries.GetClassById;
+using Application.Features.SchoolClassManagement.Queries.GetAllClasses;
+using Application.Features.SchoolClassManagement.Queries.GetClassTeachers;
 using Application.Features.SchoolClassManagement.DTOs;
 using Microsoft.AspNetCore.Mvc;
 
@@ -15,9 +18,21 @@ namespace API.Controllers;
 public class ClassesController : Controller
 {
     private readonly IMessageBus _messageBus;
+
     public ClassesController(IMessageBus messageBus)
     {
         _messageBus = messageBus;
+    }
+
+    /// <summary>
+    /// Gets all classes
+    /// </summary>
+    [HttpGet]
+    public async Task<IActionResult> GetAllClasses()
+    {
+        var query = new GetAllClassesQuery();
+        var result = await _messageBus.SendAsync<GetAllClassesQuery, List<ClassResponseDto>>(query);
+        return Ok(result);
     }
 
     /// <summary>
@@ -29,7 +44,7 @@ public class ClassesController : Controller
     {
         var command = dto.ToCreateClassCommand();
         var responseId = await _messageBus.SendAsync<CreateClassCommand, string>(command);
-        return CreatedAtAction(null, new { Id = responseId });
+        return CreatedAtAction(nameof(GetClassById), new { id = responseId }, new { Id = responseId });
     }
 
     /// <summary>
@@ -51,8 +66,6 @@ public class ClassesController : Controller
     {
         var command = dto.ToUpdateClassCommand(id);
         await _messageBus.SendAsync<UpdateClassCommand>(command);
-
-        // 204 No Content - standard for successful updates with no body
         return NoContent();
     }
 
@@ -74,8 +87,40 @@ public class ClassesController : Controller
     public async Task<IActionResult> GetClassStudents(string id)
     {
         var query = new GetClassStudentsQuery(id);
-        var result = await _messageBus.SendAsync<GetClassStudentsQuery, List<StudentResponseDto>> (query);
+        var result = await _messageBus.SendAsync<GetClassStudentsQuery, List<StudentResponseDto>>(query);
         return Ok(result);
     }
-}
 
+    /// <summary>
+    /// Gets teachers assigned to a class
+    /// </summary>
+    [HttpGet("{id}/teachers")]
+    public async Task<IActionResult> GetClassTeachers(string id)
+    {
+        var query = new GetClassTeachersQuery(id);
+        var result = await _messageBus.SendAsync<GetClassTeachersQuery, List<TeacherResponseDto>>(query);
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// Assigns a teacher to a class
+    /// </summary>
+    [HttpPost("{id}/assign-teacher")]
+    public async Task<IActionResult> AssignTeacher(string id, [FromBody] AssignTeacherDto dto)
+    {
+        var command = new AssignTeacherCommand(id, dto.TeacherId);
+        await _messageBus.SendAsync<AssignTeacherCommand>(command);
+        return NoContent();
+    }
+
+    /// <summary>
+    /// Removes a teacher from a class
+    /// </summary>
+    [HttpDelete("{id}/remove-teacher/{teacherId}")]
+    public async Task<IActionResult> RemoveTeacher(string id, string teacherId)
+    {
+        var command = new RemoveTeacherCommand(id, teacherId);
+        await _messageBus.SendAsync<RemoveTeacherCommand>(command);
+        return NoContent();
+    }
+}

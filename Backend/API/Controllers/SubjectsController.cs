@@ -32,4 +32,104 @@ public class SubjectsController : Controller
         var responseId = await _messageBus.SendAsync<CreateSubjectCommand, string>(command);
         return CreatedAtAction(null, new { Id = responseId });
     }
+
+    /// <summary>
+    /// Gets all subjects with optional pagination and filtering
+    /// </summary>
+    [HttpGet]
+    [ProducesResponseType(typeof(PagedResult<SubjectResponseDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetSubjects([FromQuery] GetSubjectsQueryDto queryDto)
+    {
+        var query = new GetSubjectsQuery
+        {
+            Page = queryDto.Page ?? 1,
+            PageSize = queryDto.PageSize ?? 10,
+            Search = queryDto.Search,
+            IsActive = queryDto.IsActive
+        };
+
+        var result = await _messageBus.SendAsync<GetSubjectsQuery, PagedResult<SubjectResponseDto>>(query);
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// Gets a specific subject by ID
+    /// </summary>
+    /// <param name="id">Subject ID</param>
+    /// <returns>Subject details</returns>
+    /// <response code="200">Returns the subject</response>
+    /// <response code="404">Subject not found</response>
+    [HttpGet("{id}")]
+    [ProducesResponseType(typeof(SubjectResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetSubjectById(string id)
+    {
+        var query = new GetSubjectByIdQuery { Id = id };
+        var result = await _messageBus.SendAsync<GetSubjectByIdQuery, SubjectResponseDto>(query);
+        
+        if (result == null)
+        {
+            return NotFound(new { Message = $"Subject with ID '{id}' not found." });
+        }
+
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// Updates an existing subject
+    /// </summary>
+    [HttpPut("{id}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> UpdateSubject(string id, [FromBody] UpdateSubjectDto requestDto)
+    {
+        if (!ModelState.IsValid)
+        {
+            var errorList = ModelState.Values
+                .SelectMany(v => v.Errors)
+                .Select(m => m.ErrorMessage)
+                .ToList();
+            return BadRequest(new { Errors = errorList });
+        }
+
+        var command = new UpdateSubjectCommand
+        {
+            Id = id,
+            Name = requestDto.Name,
+            Code = requestDto.Code,
+            Description = requestDto.Description,
+            Credits = requestDto.Credits,
+            IsActive = requestDto.IsActive
+        };
+
+        await _messageBus.SendAsync<UpdateSubjectCommand, bool>(command);
+        return NoContent();
+    }
+
+    /// <summary>
+    /// Deletes a subject (soft delete)
+    /// </summary>
+    [HttpDelete("{id}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DeleteSubject(string id)
+    {
+        var command = new DeleteSubjectCommand { Id = id };
+        await _messageBus.SendAsync<DeleteSubjectCommand, bool>(command);
+        return NoContent();
+    }
+
+    /// <summary>
+    /// Gets all classes that teach this subject
+    /// </summary>
+    [HttpGet("{id}/classes")]
+    [ProducesResponseType(typeof(List<ClassResponseDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetSubjectClasses(string id)
+    {
+        var query = new GetSubjectClassesQuery { SubjectId = id };
+        var result = await _messageBus.SendAsync<GetSubjectClassesQuery, List<ClassResponseDto>>(query);
+        return Ok(result);
+    }
 }

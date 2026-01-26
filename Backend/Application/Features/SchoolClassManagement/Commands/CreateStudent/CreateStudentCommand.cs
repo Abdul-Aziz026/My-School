@@ -6,9 +6,16 @@ namespace Application.Features.SchoolClassManagement.Commands.CreateStudent;
 public class CreateStudentCommand : IRequest<CreateStudentResponseDto>
 {
     public string Name { get; set; }
-    public DateTime DateOfBirth { get; set; }
-    public string Email { get; set; }
-    public string Phone { get; set; }
+    public string StudentNumber { get; init; } = default!;
+    public string SchoolId { get; init; } = default!;
+
+    public DateTime DateOfBirth { get; init; }
+
+    public string Email { get; init; } = default!;
+    public string Phone { get; init; } = default!;
+
+    public int Grade { get; init; }
+    public string Section { get; init; } = default!;
 }
 
 

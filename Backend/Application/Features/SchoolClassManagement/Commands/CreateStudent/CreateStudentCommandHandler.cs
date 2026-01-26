@@ -31,13 +31,16 @@ public class CreateStudentCommandHandler : IRequestHandler<CreateStudentCommand,
             var student = new Student
             {
                 Id = Guid.NewGuid().ToString(),
-                StudentNumber = GenerateStudentNumber(),
+                StudentNumber = request.StudentNumber,
                 Name = request.Name,
                 DateOfBirth = request.DateOfBirth,
                 Email = request.Email,
                 Phone = request.Phone,
+                Grade = request.Grade,
+                Section = request.Section,
                 CreatedAt = DateTime.UtcNow,
-                Status = StudentStatus.Active
+                Status = StudentStatus.Active,
+                SchoolId = request.SchoolId
             };
             await _studentRepository.AddAsync(student);
             _logger.LogInformation("Student created successfully: {StudentId}", student.Id);

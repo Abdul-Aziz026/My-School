@@ -16,20 +16,20 @@ public class CreateSubjectCommandHandler : IRequestHandler<CreateSubjectCommand,
     }
     public async Task<string> Handle(CreateSubjectCommand command, CancellationToken cancellationToken)
     {
-        Expression<Func<Subjects, bool>> condition = x => x.Name == command.Name;
-        var subject = await _subjectRepository.GetItemByConditionAsync<Subjects>(condition);
+        Expression<Func<Subject, bool>> condition = x => x.Name == command.Name;
+        var subject = await _subjectRepository.GetItemByConditionAsync<Subject>(condition);
         if (subject is not null)
         {
             throw new InvalidOperationException("Subject Already Exists");
         }
-        var newSubject = new Subjects
+        var newSubject = new Subject
         {
             Name = command.Name,
             Code = command.Code,
             Credits = command.Credits,
             Description = command.Description,
         };
-        await _subjectRepository.DeleteAsync<Subjects>(newSubject);
+        await _subjectRepository.DeleteAsync<Subject>(newSubject);
         return newSubject.Id;
     }
 }

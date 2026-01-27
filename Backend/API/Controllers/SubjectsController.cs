@@ -1,7 +1,13 @@
 ﻿using Application.Common.Interfaces.Publisher;
+using Application.Features.Common.Models;
 using Application.Features.SchoolClassManagement.Commands.CreateClass;
 using Application.Features.SchoolClassManagement.Commands.CreateSubject;
+using Application.Features.SchoolClassManagement.Commands.DeleteSubject;
+using Application.Features.SchoolClassManagement.Commands.UpdateSubject;
 using Application.Features.SchoolClassManagement.DTOs;
+using Application.Features.SchoolClassManagement.Queries.GetSubjectById;
+using Application.Features.SchoolClassManagement.Queries.GetSubjectClasses;
+using Application.Features.SchoolClassManagement.Queries.GetSubjects;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers;
@@ -40,13 +46,7 @@ public class SubjectsController : Controller
     [ProducesResponseType(typeof(PagedResult<SubjectResponseDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetSubjects([FromQuery] GetSubjectsQueryDto queryDto)
     {
-        var query = new GetSubjectsQuery
-        {
-            Page = queryDto.Page ?? 1,
-            PageSize = queryDto.PageSize ?? 10,
-            Search = queryDto.Search,
-            IsActive = queryDto.IsActive
-        };
+        var query = queryDto.ToGetSubjectsQuery();
 
         var result = await _messageBus.SendAsync<GetSubjectsQuery, PagedResult<SubjectResponseDto>>(query);
         return Ok(result);
@@ -64,14 +64,8 @@ public class SubjectsController : Controller
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetSubjectById(string id)
     {
-        var query = new GetSubjectByIdQuery { Id = id };
+        var query = new GetSubjectByIdQuery(id);
         var result = await _messageBus.SendAsync<GetSubjectByIdQuery, SubjectResponseDto>(query);
-        
-        if (result == null)
-        {
-            return NotFound(new { Message = $"Subject with ID '{id}' not found." });
-        }
-
         return Ok(result);
     }
 
@@ -93,17 +87,8 @@ public class SubjectsController : Controller
             return BadRequest(new { Errors = errorList });
         }
 
-        var command = new UpdateSubjectCommand
-        {
-            Id = id,
-            Name = requestDto.Name,
-            Code = requestDto.Code,
-            Description = requestDto.Description,
-            Credits = requestDto.Credits,
-            IsActive = requestDto.IsActive
-        };
-
-        await _messageBus.SendAsync<UpdateSubjectCommand, bool>(command);
+        var command = requestDto.ToUpdateSubjectCommand(id);
+        await _messageBus.SendAsync<UpdateSubjectCommand>(command);
         return NoContent();
     }
 
@@ -115,8 +100,8 @@ public class SubjectsController : Controller
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteSubject(string id)
     {
-        var command = new DeleteSubjectCommand { Id = id };
-        await _messageBus.SendAsync<DeleteSubjectCommand, bool>(command);
+        var command = new DeleteSubjectCommand(id);
+        await _messageBus.SendAsync<DeleteSubjectCommand>(command);
         return NoContent();
     }
 

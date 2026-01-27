@@ -14,6 +14,7 @@ public class Student : BaseEntity
     public string Section {  get; set; } = string.Empty;
     public StudentStatus Status { get; set; }
     public bool IsDeleted { get; set; } = false;
+    public bool IsActive { get; set; } = true;
 
     public string GetId() => Id;
 }

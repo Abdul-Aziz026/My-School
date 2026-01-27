@@ -37,6 +37,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IClassRepository, ClassRepository>();
         services.AddSingleton<ISubjectRepository, SubjectRepository>();
         services.AddSingleton<IStudentRepository, StudentRepository>();
+        services.AddSingleton<ITeacherRepository, TeacherRepository>();
         services.AddSingleton<IEnrollmentRepository, EnrollmentRepository>();
         services.AddSingleton<IPaymentRepository, PaymentRepository>();
 

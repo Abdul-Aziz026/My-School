@@ -1,10 +1,11 @@
 ﻿using Application.Common.Exceptions;
 using Application.Common.Interfaces.Repositories;
 using Application.Features.SchoolClassManagement.DTOs;
+using Application.Features.SchoolClassManagement.Queries.GetSubjectById;
+using Application.Features.SchoolClassManagement.Queries.GetTeacherById;
 using Domain.Entities;
 using MediatR;
 
-namespace Application.Features.SchoolClassManagement.Queries.GetSubjectById;
 
 public class GetSubjectByIdQueryHandler : IRequestHandler<GetSubjectByIdQuery, SubjectResponseDto>
 {

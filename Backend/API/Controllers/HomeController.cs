@@ -1,3 +1,4 @@
+/*
 using Application.Common.Interfaces.Publisher;
 using Application.Features.Dashboard.Queries.GetDashboardStats;
 using Application.Features.Dashboard.Queries.GetRecentActivities;
@@ -185,3 +186,4 @@ public class HomePageOverviewDto
     public List<EventDto> UpcomingEvents { get; set; }
     public List<AnnouncementDto> Announcements { get; set; }
 }
+*/

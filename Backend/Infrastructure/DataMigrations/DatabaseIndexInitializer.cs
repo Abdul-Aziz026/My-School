@@ -57,7 +57,7 @@ public class DatabaseIndexInitializer : IDatabaseIndexInitializer
                 }
             }
         }
-        _logger.LogInformation($"{processedCount} {skipCount}")
+        _logger.LogInformation($"{processedCount} {skipCount}");
     }
 
     private async Task RecordIndexMigrationAsync(IndexDefinition indexDef)

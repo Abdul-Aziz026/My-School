@@ -1,8 +1,12 @@
 ﻿
-namespace Domain.Entities;
+using Domain.Entities;
+using MediatR;
 
-public class Teacher : BaseEntity
+namespace Application.Features.SchoolClassManagement.Commands.UpdateTeacher;
+
+public class UpdateTeacherCommand : IRequest
 {
+    public string Id { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public string SchoolId { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
@@ -14,15 +18,4 @@ public class Teacher : BaseEntity
     // Academic
     public string Department { get; set; } = string.Empty;
     public string Designation { get; set; } = string.Empty; // e.g. Senior Teacher
-    public List<string> ClassIds {  get; set; } = new();
-    public List<string> SubjectIds {  get; set; } = new();
-    public bool IsDeleted { get; set; }
-}
-
-public enum TeacherStatus
-{
-    Active,
-    Inactive,
-    Retired,
-    OnLeave
 }

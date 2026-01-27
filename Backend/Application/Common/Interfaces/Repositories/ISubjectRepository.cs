@@ -1,5 +1,7 @@
-﻿namespace Application.Common.Interfaces.Repositories;
+﻿using Domain.Repositories.Base;
 
-public interface ISubjectRepository : IClassRepository
+namespace Application.Common.Interfaces.Repositories;
+
+public interface ISubjectRepository : IRepository
 {
 }

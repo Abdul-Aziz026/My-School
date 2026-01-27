@@ -10,6 +10,7 @@ using Application.Features.SchoolClassManagement.Queries.GetTeacherById;
 using Application.Features.SchoolClassManagement.Queries.GetTeacherClasses;
 using Application.Features.SchoolClassManagement.Queries.GetTeacherSubjects;
 using Microsoft.AspNetCore.Mvc;
+using Application.Features.Common.Models;
 
 namespace API.Controllers;
 
@@ -28,7 +29,7 @@ public class TeachersController : ControllerBase
     /// Creates a new teacher record
     /// </summary>
     [HttpPost]
-    [ProducesResponseType(typeof(CreateTeacherResponseDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(TeacherResponseDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> CreateTeacher([FromBody] CreateTeacherDto requestDto)
     {
@@ -58,15 +59,7 @@ public class TeachersController : ControllerBase
     [ProducesResponseType(typeof(PagedResult<TeacherResponseDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetTeachers([FromQuery] GetTeachersQueryDto queryDto)
     {
-        var query = new GetTeachersQuery
-        {
-            Page = queryDto.Page ?? 1,
-            PageSize = queryDto.PageSize ?? 10,
-            Search = queryDto.Search,
-            Department = queryDto.Department,
-            SubjectId = queryDto.SubjectId,
-            IsActive = queryDto.IsActive
-        };
+        var query = queryDto.ToGetTeacherQuery();
 
         var result = await _messageBus.SendAsync<GetTeachersQuery, PagedResult<TeacherResponseDto>>(query);
         return Ok(result);
@@ -76,18 +69,12 @@ public class TeachersController : ControllerBase
     /// Gets a specific teacher by ID
     /// </summary>
     [HttpGet("{id}")]
-    [ProducesResponseType(typeof(TeacherDetailResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(TeacherResponseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetTeacherById(string id)
     {
-        var query = new GetTeacherByIdQuery { Id = id };
-        var result = await _messageBus.SendAsync<GetTeacherByIdQuery, TeacherDetailResponseDto>(query);
-
-        if (result == null)
-        {
-            return NotFound(new { Message = $"Teacher with ID '{id}' not found." });
-        }
-
+        var query = new GetTeacherByIdQuery(id);
+        var result = await _messageBus.SendAsync<GetTeacherByIdQuery, TeacherResponseDto>(query);
         return Ok(result);
     }
 
@@ -109,21 +96,8 @@ public class TeachersController : ControllerBase
             return BadRequest(new { Errors = errorList });
         }
 
-        var command = new UpdateTeacherCommand
-        {
-            Id = id,
-            FirstName = requestDto.FirstName,
-            LastName = requestDto.LastName,
-            Email = requestDto.Email,
-            PhoneNumber = requestDto.PhoneNumber,
-            Department = requestDto.Department,
-            Specialization = requestDto.Specialization,
-            HireDate = requestDto.HireDate,
-            Qualifications = requestDto.Qualifications,
-            IsActive = requestDto.IsActive
-        };
-
-        await _messageBus.SendAsync<UpdateTeacherCommand, bool>(command);
+        var command = requestDto.ToUpdateTeacherCommand(id);
+        await _messageBus.SendAsync<UpdateTeacherCommand>(command);
         return NoContent();
     }
 
@@ -132,12 +106,11 @@ public class TeachersController : ControllerBase
     /// </summary>
     [HttpDelete("{id}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteTeacher(string id)
     {
-        var command = new DeleteTeacherCommand { Id = id };
-        await _messageBus.SendAsync<DeleteTeacherCommand, bool>(command);
+        var command = new DeleteTeacherCommand(id);
+        await _messageBus.SendAsync<DeleteTeacherCommand>(command);
         return NoContent();
     }
 
@@ -162,7 +135,7 @@ public class TeachersController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetTeacherSubjects(string teacherId)
     {
-        var query = new GetTeacherSubjectsQuery { TeacherId = teacherId };
+        var query = new GetTeacherSubjectsQuery(teacherId);
         var result = await _messageBus.SendAsync<GetTeacherSubjectsQuery, List<SubjectResponseDto>>(query);
         return Ok(result);
     }
@@ -171,10 +144,10 @@ public class TeachersController : ControllerBase
     /// Assigns a teacher to a class
     /// </summary>
     [HttpPost("assign-class")]
-    [ProducesResponseType(typeof(AssignTeacherResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> AssignTeacherToClass([FromBody] AssignTeacherToClassDto request)
+    public async Task<IActionResult> AssignTeacherToClass(AssignTeacherToClassDto request)
     {
         if (!ModelState.IsValid)
         {
@@ -185,21 +158,10 @@ public class TeachersController : ControllerBase
             return BadRequest(new { Errors = errorList });
         }
 
-        var command = new AssignTeacherToClassCommand
-        {
-            TeacherId = request.TeacherId,
-            ClassId = request.ClassId,
-            IsPrimaryTeacher = request.IsPrimaryTeacher
-        };
+        var command = request.ToAssignTeacherToClassCommand();
 
-        var response = await _messageBus.SendAsync<AssignTeacherToClassCommand, AssignTeacherResponseDto>(command);
-
-        if (!response.Success)
-        {
-            return BadRequest(new { Message = response.Message });
-        }
-
-        return Ok(response);
+        var assignedId = await _messageBus.SendAsync<AssignTeacherToClassCommand, string>(command);
+        return Ok(assignedId);
     }
 
     /// <summary>
@@ -209,7 +171,7 @@ public class TeachersController : ControllerBase
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> UnassignTeacherFromClass([FromBody] UnassignTeacherFromClassDto request)
+    public async Task<IActionResult> UnassignTeacherFromClass(UnassignTeacherFromClassDto request)
     {
         if (!ModelState.IsValid)
         {
@@ -220,158 +182,8 @@ public class TeachersController : ControllerBase
             return BadRequest(new { Errors = errorList });
         }
 
-        var command = new UnassignTeacherFromClassCommand
-        {
-            TeacherId = request.TeacherId,
-            ClassId = request.ClassId
-        };
-
+        var command = request.ToUnassignTeacherFromClassCommand();
         await _messageBus.SendAsync<UnassignTeacherFromClassCommand>(command);
         return NoContent();
     }
-}
-
-// ============================================================================
-// DTOs (place these in your Application layer DTOs folder)
-// ============================================================================
-
-/// <summary>
-/// DTO for creating a teacher
-/// </summary>
-public class CreateTeacherDto
-{
-    public string FirstName { get; set; } = string.Empty;
-    public string LastName { get; set; } = string.Empty;
-    public string Email { get; set; } = string.Empty;
-    public string? PhoneNumber { get; set; }
-    public string? Department { get; set; }
-    public string? Specialization { get; set; }
-    public DateTime? HireDate { get; set; }
-    public string? Qualifications { get; set; }
-    public List<string> SubjectIds { get; set; } = new();
-
-    public CreateTeacherCommand ToCreateTeacherCommand() => new CreateTeacherCommand
-    {
-        FirstName = FirstName,
-        LastName = LastName,
-        Email = Email,
-        PhoneNumber = PhoneNumber,
-        Department = Department,
-        Specialization = Specialization,
-        HireDate = HireDate ?? DateTime.UtcNow,
-        Qualifications = Qualifications,
-        SubjectIds = SubjectIds
-    };
-}
-
-/// <summary>
-/// DTO for updating a teacher
-/// </summary>
-public class UpdateTeacherDto
-{
-    public string FirstName { get; set; } = string.Empty;
-    public string LastName { get; set; } = string.Empty;
-    public string Email { get; set; } = string.Empty;
-    public string? PhoneNumber { get; set; }
-    public string? Department { get; set; }
-    public string? Specialization { get; set; }
-    public DateTime? HireDate { get; set; }
-    public string? Qualifications { get; set; }
-    public bool IsActive { get; set; } = true;
-}
-
-/// <summary>
-/// Query parameters for getting teachers
-/// </summary>
-public class GetTeachersQueryDto
-{
-    /// <summary>
-    /// Page number (default: 1)
-    /// </summary>
-    public int? Page { get; set; }
-
-    /// <summary>
-    /// Page size (default: 10)
-    /// </summary>
-    public int? PageSize { get; set; }
-
-    /// <summary>
-    /// Search term for teacher name or email
-    /// </summary>
-    public string? Search { get; set; }
-
-    /// <summary>
-    /// Filter by department
-    /// </summary>
-    public string? Department { get; set; }
-
-    /// <summary>
-    /// Filter by subject ID
-    /// </summary>
-    public string? SubjectId { get; set; }
-
-    /// <summary>
-    /// Filter by active status
-    /// </summary>
-    public bool? IsActive { get; set; }
-}
-
-/// <summary>
-/// Detailed response DTO for individual teacher view
-/// </summary>
-public class TeacherDetailResponseDto
-{
-    public string Id { get; set; } = string.Empty;
-    public string FirstName { get; set; } = string.Empty;
-    public string LastName { get; set; } = string.Empty;
-    public string FullName => $"{FirstName} {LastName}";
-    public string Email { get; set; } = string.Empty;
-    public string? PhoneNumber { get; set; }
-    public string? Department { get; set; }
-    public string? Specialization { get; set; }
-    public DateTime HireDate { get; set; }
-    public int YearsOfService => DateTime.Now.Year - HireDate.Year;
-    public string? Qualifications { get; set; }
-    public bool IsActive { get; set; }
-    public DateTime CreatedAt { get; set; }
-    public DateTime? UpdatedAt { get; set; }
-    public List<ClassResponseDto> Classes { get; set; } = new();
-    public List<SubjectResponseDto> Subjects { get; set; } = new();
-}
-
-/// <summary>
-/// Response DTO after creating a teacher
-/// </summary>
-public class CreateTeacherResponseDto
-{
-    public string Id { get; set; } = string.Empty;
-}
-
-/// <summary>
-/// DTO for assigning a teacher to a class
-/// </summary>
-public class AssignTeacherToClassDto
-{
-    public string TeacherId { get; set; } = string.Empty;
-    public string ClassId { get; set; } = string.Empty;
-    public bool IsPrimaryTeacher { get; set; } = true;
-}
-
-/// <summary>
-/// DTO for unassigning a teacher from a class
-/// </summary>
-public class UnassignTeacherFromClassDto
-{
-    public string TeacherId { get; set; } = string.Empty;
-    public string ClassId { get; set; } = string.Empty;
-}
-
-/// <summary>
-/// Response DTO for teacher assignment
-/// </summary>
-public class AssignTeacherResponseDto
-{
-    public bool Success { get; set; }
-    public string Message { get; set; } = string.Empty;
-    public string? AssignmentId { get; set; }
 }

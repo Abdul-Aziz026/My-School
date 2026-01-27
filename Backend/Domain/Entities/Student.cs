@@ -13,6 +13,7 @@ public class Student : BaseEntity
     public int Grade { get; set; }
     public string Section {  get; set; } = string.Empty;
     public StudentStatus Status { get; set; }
+    public bool IsDeleted { get; set; } = false;
 
     public string GetId() => Id;
 }

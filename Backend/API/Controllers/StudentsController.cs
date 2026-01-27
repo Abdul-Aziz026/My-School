@@ -1,8 +1,10 @@
 ﻿using Application.Common.Interfaces.Publisher;
 using Application.Features.Common.Models;
 using Application.Features.SchoolClassManagement.Commands.CreateStudent;
+using Application.Features.SchoolClassManagement.Commands.DeleteStudent;
 using Application.Features.SchoolClassManagement.Commands.EnrollStudent;
 using Application.Features.SchoolClassManagement.Commands.UnenrollStudent;
+using Application.Features.SchoolClassManagement.Commands.UpdateStudent;
 using Application.Features.SchoolClassManagement.DTOs;
 using Application.Features.SchoolClassManagement.Queries.GetStudentById;
 using Application.Features.SchoolClassManagement.Queries.GetStudentClasses;
@@ -104,7 +106,7 @@ public class StudentsController : Controller
         }
         // Return 201 with enrollment ID
         // Client can query student's classes to see full details
-        return CreatedAtAction("Enrolled", enrolledResponse);
+        return CreatedAtAction(null, enrolledResponse);
     }
 
     /// <summary>
@@ -125,23 +127,9 @@ public class StudentsController : Controller
             return BadRequest(new { Errors = errorList });
         }
 
-        var command = new UpdateStudentCommand
-        {
-            Id = id,
-            FirstName = requestDto.FirstName,
-            LastName = requestDto.LastName,
-            Email = requestDto.Email,
-            PhoneNumber = requestDto.PhoneNumber,
-            DateOfBirth = requestDto.DateOfBirth,
-            GradeLevel = requestDto.GradeLevel,
-            Address = requestDto.Address,
-            GuardianName = requestDto.GuardianName,
-            GuardianPhone = requestDto.GuardianPhone,
-            GuardianEmail = requestDto.GuardianEmail,
-            IsActive = requestDto.IsActive
-        };
+        var command = requestDto.ToUpdateStudentCommand(id);
 
-        await _messageBus.SendAsync<UpdateStudentCommand, bool>(command);
+        await _messageBus.SendAsync<UpdateStudentCommand>(command);
         return NoContent();
     }
     
@@ -153,8 +141,8 @@ public class StudentsController : Controller
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteStudent(string id)
     {
-        var command = new DeleteStudentCommand { Id = id };
-        await _messageBus.SendAsync<DeleteStudentCommand, bool>(command);
+        var command = new DeleteStudentCommand(id);
+        await _messageBus.SendAsync<DeleteStudentCommand>(command);
         return NoContent();
     }
 

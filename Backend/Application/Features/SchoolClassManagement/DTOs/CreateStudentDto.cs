@@ -13,13 +13,13 @@ public sealed class CreateStudentDto
     public string SchoolId { get; set; }
 
     [Required(ErrorMessage = "Dateof birth must be non empty")]
-    public DateTime DateOfBirth { get; init; }
+    public DateTime DateOfBirth { get; set; }
 
-    public string Email { get; init; } = default!;
-    public string Phone { get; init; } = default!;
+    public string Email { get; set; }
+    public string Phone { get; set; }
 
-    public int Grade { get; init; }
-    public string Section { get; init; } = default!;
+    public int Grade { get; set; }
+    public string Section { get; set; }
 
 
     public CreateStudentCommand ToCreateStudentCommand()
@@ -27,7 +27,13 @@ public sealed class CreateStudentDto
         return new CreateStudentCommand()
         {
             Name = this.Name,
-
+            StudentNumber = this.StudentNumber,
+            SchoolId = this.SchoolId,
+            DateOfBirth = this.DateOfBirth,
+            Email = this.Email,
+            Phone = this.Phone,
+            Grade = this.Grade,
+            Section = this.Section
         };
     }
 }

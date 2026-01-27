@@ -1,5 +1,4 @@
-﻿
-using Application.Common.Interfaces.Persistence;
+﻿using Application.Common.Interfaces.Persistence;
 using Domain.Entities;
 using Domain.Repositories.Base;
 using Infrastructure.Persistence;
@@ -52,5 +51,19 @@ public class Repository : IRepository
     public async Task<bool> UpdateAsync<T>(T entity) where T : BaseEntity
     {
         return await DbContext.UpdateAsync<T>(entity);
+    }
+    
+    public async Task<List<T>> GetPagedAsync<T>(Expression<Func<T, bool>>? filter = null,
+        int pageNumber = 1,
+        int pageSize = 10,
+        Expression<Func<T, object>>? orderBy = null,
+        bool ascending = true)
+    {
+        return await DbContext.GetPagedResponseAsync<T>(filter, pageNumber, pageSize, orderBy, ascending);
+    }
+
+    public async Task<long> CountAsync<T>(Expression<Func<T, bool>> filter) where T : class
+    {
+        return await DbContext.CountAsync<T>(filter);
     }
 }

@@ -3,6 +3,7 @@ namespace Domain.Entities;
 
 public class Student : BaseEntity
 {
+    public string ClassId { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public string StudentNumber { get; set; } = string.Empty;
     public string SchoolId { get; set; } = string.Empty;

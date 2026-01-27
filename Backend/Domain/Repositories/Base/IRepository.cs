@@ -1,8 +1,5 @@
 ﻿using Domain.Entities;
-using System;
-using System.Collections.Generic;
 using System.Linq.Expressions;
-using System.Text;
 
 namespace Domain.Repositories.Base;
 
@@ -17,4 +14,10 @@ public interface IRepository
     Task<T?> GetByIdAsync<T>(string Id) where T: BaseEntity;
     Task<T?> GetItemByConditionAsync<T>(Expression<Func<T, bool>> criteria) where T : BaseEntity;
     Task<List<T>?> GetItemsByConditionAsync<T>(Expression<Func<T, bool>> criteria) where T : BaseEntity;
+    Task<long> CountAsync<T>(Expression<Func<T, bool>> filter) where T : class;
+    Task<List<T>> GetPagedAsync<T>(Expression<Func<T, bool>>? filter = null,
+        int pageNumber = 1,
+        int pageSize = 10,
+        Expression<Func<T, object>>? orderBy = null,
+        bool ascending = true);
 }

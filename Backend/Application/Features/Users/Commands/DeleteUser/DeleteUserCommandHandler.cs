@@ -23,8 +23,8 @@ public class DeleteUserCommandHandler : IRequestHandler<DeleteUserCommand>
         if (user == null)
             throw new NotFoundException($"User with ID '{request.UserId}' not found");
 
-        // Soft delete - just set IsActive to false
-        //user.IsActive = false;
+        // Soft delete - just set Status to false
+        //user.Status = false;
         //user.LockoutEnd = DateTime.UtcNow.AddYears(100); // Permanent lockout
 
         var isDeleteSuccessFull = await _userRepository.DeleteAsync<User>(user);

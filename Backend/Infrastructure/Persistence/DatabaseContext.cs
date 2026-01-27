@@ -401,7 +401,7 @@ public class DatabaseContext : IDatabaseContext, IDisposable
 var (filtered, cursor) = await database.GetCursorPagedResponseAsync<Product, object>(
     lastId: null,
     pageSize: 20,
-    criteria: p => p.IsActive == true,
+    criteria: p => p.Status == true,
     cancellationToken: cancellationToken
 );
      */

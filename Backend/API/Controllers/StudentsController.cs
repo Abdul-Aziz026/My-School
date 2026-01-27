@@ -4,7 +4,9 @@ using Application.Features.SchoolClassManagement.Commands.CreateStudent;
 using Application.Features.SchoolClassManagement.Commands.EnrollStudent;
 using Application.Features.SchoolClassManagement.Commands.UnenrollStudent;
 using Application.Features.SchoolClassManagement.DTOs;
+using Application.Features.SchoolClassManagement.Queries.GetStudentById;
 using Application.Features.SchoolClassManagement.Queries.GetStudentClasses;
+using Application.Features.SchoolClassManagement.Queries.GetStudents;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers;
@@ -38,12 +40,12 @@ public class StudentsController : Controller
         }
 
         var command = requestDto.ToCreateStudentCommand();
-        var responseId = await _messageBus.SendAsync<CreateStudentCommand, string>(command);
+        var response = await _messageBus.SendAsync<CreateStudentCommand, CreateStudentResponseDto>(command);
 
         return CreatedAtAction(
             nameof(GetStudentById),
-            new { id = responseId },
-            new { Id = responseId }
+            new { id = response.StudentId },
+            new { StudentNumer = response.StudentNumber }
         );
     }
 
@@ -59,9 +61,9 @@ public class StudentsController : Controller
             Page = queryDto.Page ?? 1,
             PageSize = queryDto.PageSize ?? 10,
             Search = queryDto.Search,
-            GradeLevel = queryDto.GradeLevel,
+            Grade = queryDto.GradeLevel,
             ClassId = queryDto.ClassId,
-            IsActive = queryDto.IsActive
+            Status = queryDto.Status
         };
 
         var result = await _messageBus.SendAsync<GetStudentsQuery, PagedResult<StudentResponseDto>>(query);
@@ -72,18 +74,12 @@ public class StudentsController : Controller
     /// Gets a specific student by ID
     /// </summary>
     [HttpGet("{id}")]
-    [ProducesResponseType(typeof(StudentDetailResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(StudentResponseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetStudentById(string id)
     {
-        var query = new GetStudentByIdQuery { Id = id };
-        var result = await _messageBus.SendAsync<GetStudentByIdQuery, StudentDetailResponseDto>(query);
-
-        if (result == null)
-        {
-            return NotFound(new { Message = $"Student with ID '{id}' not found." });
-        }
-
+        var query = new GetStudentByIdQuery( id);
+        var result = await _messageBus.SendAsync<GetStudentByIdQuery, StudentResponseDto>(query);
         return Ok(result);
     }
 

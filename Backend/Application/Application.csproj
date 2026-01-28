@@ -8,6 +8,11 @@
 
   <ItemGroup>
     <Folder Include="Features\Auth\Mappings\" />
+    <Folder Include="Features\SchoolClassManagement\AttendanceManagement\Queries\GetDailyAttendance\" />
+    <Folder Include="Features\SchoolClassManagement\AttendanceManagement\Queries\GetStudentAttendanceHistory\" />
+    <Folder Include="Features\SchoolClassManagement\AttendanceManagement\Queries\GetAttendanceById\" />
+    <Folder Include="Features\SchoolClassManagement\AttendanceManagement\Queries\GetAttendanceReport\" />
+    <Folder Include="Features\SchoolClassManagement\AttendanceManagement\Queries\GetAttendanceStatistics\" />
     <Folder Include="Features\SchoolClassManagement\Queries\GetSubjectById\" />
     <Folder Include="Validators\" />
   </ItemGroup>

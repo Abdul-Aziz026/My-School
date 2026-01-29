@@ -10,13 +10,16 @@ public class RecordEntryDto
     public string StudentId { get; set; } = string.Empty;
     [Required(ErrorMessage = "EntryTime is required.")]
     public DateTime EntryTime { get; set; }
+    [Required(ErrorMessage = "ClassId is required.")]
+    public string ClassId { get; set; } = string.Empty;
 
     public RecordEntryCommand ToRecordEntryCommand()
     {
         return new RecordEntryCommand
         {
             StudentId = this.StudentId,
-            EntryTime = this.EntryTime
+            EntryTime = this.EntryTime,
+            ClassId = this.ClassId
         };
     }
 }

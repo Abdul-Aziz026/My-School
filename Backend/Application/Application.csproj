@@ -7,12 +7,16 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Features\SchoolClassManagement\AttendanceManagement\Queries\GetAttendanceReport\**" />
+    <Compile Remove="Features\SchoolClassManagement\AttendanceManagement\Queries\GetAttendanceStatistics\**" />
+    <EmbeddedResource Remove="Features\SchoolClassManagement\AttendanceManagement\Queries\GetAttendanceReport\**" />
+    <EmbeddedResource Remove="Features\SchoolClassManagement\AttendanceManagement\Queries\GetAttendanceStatistics\**" />
+    <None Remove="Features\SchoolClassManagement\AttendanceManagement\Queries\GetAttendanceReport\**" />
+    <None Remove="Features\SchoolClassManagement\AttendanceManagement\Queries\GetAttendanceStatistics\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Folder Include="Features\Auth\Mappings\" />
-    <Folder Include="Features\SchoolClassManagement\AttendanceManagement\Queries\GetDailyAttendance\" />
-    <Folder Include="Features\SchoolClassManagement\AttendanceManagement\Queries\GetStudentAttendanceHistory\" />
-    <Folder Include="Features\SchoolClassManagement\AttendanceManagement\Queries\GetAttendanceById\" />
-    <Folder Include="Features\SchoolClassManagement\AttendanceManagement\Queries\GetAttendanceReport\" />
-    <Folder Include="Features\SchoolClassManagement\AttendanceManagement\Queries\GetAttendanceStatistics\" />
     <Folder Include="Features\SchoolClassManagement\Queries\GetSubjectById\" />
     <Folder Include="Validators\" />
   </ItemGroup>

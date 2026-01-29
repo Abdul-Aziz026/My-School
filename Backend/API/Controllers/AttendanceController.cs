@@ -1,5 +1,10 @@
 ﻿using Application.Common.Interfaces.Publisher;
+using Application.Features.SchoolClassManagement.AttendanceManagement.Commands.DeleteAttendance;
+using Application.Features.SchoolClassManagement.AttendanceManagement.Commands.RecordEntry;
 using Application.Features.SchoolClassManagement.AttendanceManagement.DTOs;
+using Application.Features.SchoolClassManagement.AttendanceManagement.Queries.ExportAttendanceData;
+using Application.Features.SchoolClassManagement.AttendanceManagement.Queries.GetDailyAttendance;
+using Application.Features.SchoolClassManagement.AttendanceManagement.Queries.GetStudentAttendanceHistory;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -15,6 +20,9 @@ public class AttendanceController : Controller
         _messageBus = messageBus;
     }
 
+    /// <summary>
+    /// Record Entry time
+    /// </summary>
     [HttpPost("entry")]
     public async Task<IActionResult> RecordEntry([FromBody]RecordEntryDto dto)
     {
@@ -24,7 +32,7 @@ public class AttendanceController : Controller
             return BadRequest(ModelState);
         }
         var command = dto.ToRecordEntryCommand();
-        await _messageBus.SendAsync(command);
+        await _messageBus.SendAsync<RecordEntryCommand>(command);
         return Ok("Student Entry Added Successfully");
     }
 
@@ -39,9 +47,8 @@ public class AttendanceController : Controller
             var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
             return BadRequest(ModelState);
         }
-        // Implementation for marking exit attendance
-        // Convert DTO to command
-        // await _messageBus.SendAsync(command);
+        var command = dto.ToRecordExitCommand();
+        await _messageBus.SendAsync(command);
         return Ok("Student Exit Recorded Successfully");
     }
 
@@ -51,9 +58,11 @@ public class AttendanceController : Controller
     [HttpDelete("{attendanceId}")]
     public async Task<IActionResult> DeleteAttendanceRecord(string attendanceId)
     {
-        // Implementation for deleting attendance record
-        // var command = new DeleteAttendanceRecordCommand(attendanceId);
-        // await _messageBus.SendAsync(command);
+        var command = new DeleteAttendanceCommand()
+        {
+            AttendanceId = attendanceId
+        };
+        await _messageBus.SendAsync(command);
         return Ok("Attendance Record Deleted Successfully");
     }
 
@@ -68,9 +77,9 @@ public class AttendanceController : Controller
             var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
             return BadRequest(ModelState);
         }
-        // Implementation for updating attendance record
-        // Convert DTO to command
-        // await _messageBus.SendAsync(command);
+
+        var command = dto.ToUpdateAttendanceCommand(attendanceId);
+        await _messageBus.SendAsync(command);
         return Ok("Attendance Record Updated Successfully");
     }
 
@@ -79,12 +88,15 @@ public class AttendanceController : Controller
     /// </summary>
     [HttpGet("daily/{classId}")]
     [Authorize(Roles = "Admin,Teacher")]
-    public async Task<IActionResult> GetDailyAttendance(string classId, DateTime date)
+    public async Task<IActionResult> GetDailyAttendance([FromRoute]string classId, [FromQuery]DateTime date)
     {
-        // Implementation for fetching daily attendance
-        // var query = new GetDailyAttendanceQuery(classId, date);
-        // var result = await _messageBus.SendAsync<GetDailyAttendanceQuery, List<AttendanceDto>>(query);
-        return Ok(/*result*/);
+        var query = new GetDailyAttendanceQuery()
+        {
+            ClassId = classId,
+            Date = date
+        };
+        var result = await _messageBus.SendAsync<GetDailyAttendanceQuery, List<AttendanceResponseDto>>(query);
+        return Ok(result);
     }
 
     /// <summary>
@@ -92,12 +104,18 @@ public class AttendanceController : Controller
     /// </summary>
     [HttpGet("student/{studentId}/history")]
     [Authorize(Roles = "Admin,Teacher,Student")]
-    public async Task<IActionResult> GetStudentAttendanceHistory(string studentId)
+    public async Task<IActionResult> GetStudentAttendanceHistory([FromRoute]string studentId,
+                                                                 [FromQuery]DateTime? startDate = null,
+                                                                 [FromQuery]DateTime? endDate = null)
     {
-        // Implementation for fetching student attendance history
-        // var query = new GetStudentAttendanceHistoryQuery(studentId);
-        // var result = await _messageBus.SendAsync<GetStudentAttendanceHistoryQuery, List<AttendanceDto>>(query);
-        return Ok(/*result*/);
+        var query = new GetStudentAttendanceHistoryQuery()
+        {
+            StudentId = studentId,
+            StartDate = startDate,
+            EndDate = endDate
+        };
+        var result = await _messageBus.SendAsync<GetStudentAttendanceHistoryQuery, List<AttendanceResponseDto>>(query);
+        return Ok(result);
     }
 
     /// <summary>
@@ -106,11 +124,19 @@ public class AttendanceController : Controller
     /// Parameters: format (excel/pdf), startDate, endDate
     [HttpGet("export")]
     [Authorize(Roles = "Admin,Teacher")]
-    public async Task<IActionResult> ExportAttendanceData(string format, DateTime startDate, DateTime endDate)
+    public async Task<IActionResult> ExportAttendanceData([FromQuery] string format, 
+                                                          [FromQuery] DateTime startDate, 
+                                                          [FromQuery] DateTime endDate,
+                                                          [FromQuery] string? classId = null)
     {
-        // Implementation for exporting attendance data
-        // var query = new ExportAttendanceDataQuery(format, startDate, endDate);
-        // var fileResult = await _messageBus.SendAsync<ExportAttendanceDataQuery, FileResultDto>(query);
-        return Ok(/*fileResult*/);
+        var query = new ExportAttendanceDataQuery()
+        {
+            Format = format,
+            StartDate = startDate,
+            EndDate = endDate,
+            ClassId = classId
+        };
+        var fileResult = await _messageBus.SendAsync<ExportAttendanceDataQuery, AttendanceFileResultDto>(query);
+        return Ok(fileResult);
     }
 }

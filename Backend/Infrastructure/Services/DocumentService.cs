@@ -1,14 +1,13 @@
-﻿using System.Reflection.Metadata;
-using Application.Common.Interfaces.Services;
+﻿using Application.Common.Interfaces.Services;
 using ClosedXML.Excel;
-using DocumentFormat.OpenXml.Spreadsheet;
-using System.Runtime.InteropServices.JavaScript;
+using QuestPDF.Fluent;
+using QuestPDF.Helpers;
 
 namespace Infrastructure.Services;
 
 public class DocumentService : IDocumentService
 {
-    public byte[] GenerateExcel<T>(IEnumerable<T> list, string sheetName = "Report") where T : class
+    public byte[] GenerateExcel<T>(List<T> data, string sheetName = "Report") where T : class
     {
         using var workbook = new XLWorkbook();
         var workSheet = workbook.Worksheets.Add(sheetName);
@@ -26,17 +25,14 @@ public class DocumentService : IDocumentService
         }
 
         // Generate Data Rows
-        int row = 2, col = 0;
-        foreach (var item in list)
+        var dataList = data.ToList();
+        for (int row = 0; row < dataList.Count; ++row)
         {
-            col = 1;
-            foreach(var c in item)
+            for(int col = 0; col < properties.Length; ++col)
             {
-                var cell = workSheet.Cell(row, col);
-                cell.Value = item[j];
-                ++col;
+                var value = properties[col].GetValue(dataList[row]);
+                workSheet.Cell(row + 2, col + 1).Value = value?.ToString() ?? string.Empty;
             }
-            row++;
         }
 
         workSheet.Columns().AdjustToContents();
@@ -45,34 +41,105 @@ public class DocumentService : IDocumentService
         return stream.ToArray();
     }
 
-    public byte[] GeneratePdf<T>(IEnumerable<T> data, string title = "Report") where T : class
+    public byte[] GeneratePdf<T>(List<T> data, string title = "Report") where T : class
     {
+        if (data == null || !data.Any())
+        {
+            throw new ArgumentException("Data cannot be null or empty");
+        }
+        var properties = typeof(T).GetProperties().Where(p => p.CanRead).ToList();
+        if (!properties.Any())
+        {
+            throw new InvalidOperationException($"Type {typeof(T).Name} has no displayable properties.");
+        }
+
         return Document.Create(container =>
         {
             container.Page(page =>
             {
-                page.Margin(50);
-                page.Header().Text(title).FontSize(20).SemiBold().FontColor(Colors.Blue.Medium);
-
-                page.Content().Table(table =>
+                page.Size(PageSizes.A4);
+                page.Margin(PdfHelper.DefaultMargin);
+                // Header
+                page.Header().Column(column =>
                 {
-                    var props = typeof(T).GetProperties();
-                    table.ColumnsDefinition(columns => {
-                        foreach (var p in props) columns.RelativeColumn();
+                    column.Item().Text(title)
+                        .FontSize(PdfHelper.HeaderFontSize)
+                        .SemiBold()
+                        .FontColor(Colors.Blue.Medium);
+                    column.Item().Text($"Generated on: {DateTime.Now:yyyy-MM-dd HH:mm}")
+                        .FontSize(PdfHelper.SubHeaderFontSize)
+                        .Italic()
+                        .FontColor(Colors.Grey.Medium);
+                });
+
+                // Content
+                page.Content().PaddingTop(10).Table(table =>
+                {
+                    // Define columns
+                    table.ColumnsDefinition(columns =>
+                    {
+                        foreach (var _ in properties)
+                        {
+                            columns.RelativeColumn();
+                        }
                     });
 
                     // Table Headers
-                    foreach (var prop in props)
-                        table.Cell().Background(Colors.Grey.Lighten3).Text(prop.Name).SemiBold();
+                    foreach (var prop in properties)
+                    {
+                        table.Cell().Background(Colors.Grey.Lighten3)
+                            .Padding(5)
+                            .Text(prop.Name)
+                            .FontSize(PdfHelper.DefaultMargin)
+                            .SemiBold();
+                    }
 
                     // Table Data
-                    foreach (var item in data)
+                    var dataList = data.ToList();
+                    for (int row = 0; row < dataList.Count; ++row)
                     {
-                        foreach (var prop in props)
-                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten4).Text(prop.GetValue(item)?.ToString());
+                        var bgColor = row % 2 == 0 ? Colors.White : Colors.Grey.Lighten5;
+                        for (int col = 0; col < properties.Count; ++col)
+                        {
+                            var value = properties[col].GetValue(dataList[row]);
+                            var formattedValue = FormatValue(value);
+
+                            table.Cell()
+                                .Background(bgColor)
+                                .BorderBottom(1)
+                                .BorderColor(Colors.Grey.Lighten4)
+                                .Padding(5)
+                                .Text(formattedValue)
+                                .FontSize(PdfHelper.TableCellFontSize);
+                        }
                     }
                 });
             });
         }).GeneratePdf();
     }
+
+    private string FormatValue(object value)
+    {
+        if (value == null) return "";
+        return value switch
+        {
+            DateTime date => date.ToString("yyyy-MM-dd"),
+            DateTimeOffset dateOffset => dateOffset.ToString("yyyy-MM-dd"),
+            decimal dec => dec.ToString("N2"),
+            double dbl => dbl.ToString("N2"),
+            float flt => flt.ToString("N2"),
+            bool b => b ? "Yes" : "No",
+            _ => value.ToString() ?? string.Empty
+        };
+    }
+}
+
+public static class PdfHelper
+{
+    public static int DefaultMargin = 40;
+    public static int HeaderFontSize = 24;
+    public static int SubHeaderFontSize = 10;
+    public static int TableHeaderFontSize = 11;
+    public static int TableCellFontSize = 10;
+    public static int MaxCellLength = 100;
 }

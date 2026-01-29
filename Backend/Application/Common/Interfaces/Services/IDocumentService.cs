@@ -2,6 +2,6 @@
 
 public interface IDocumentService
 {
-    byte[] GenerateExcel<T>(IEnumerable<T> data, string sheetName = "Report") where T : class;
-    byte[] GeneratePdf<T>(IEnumerable<T> data, string title = "Report") where T: class;
+    byte[] GenerateExcel<T>(List<T> data, string sheetName = "Report") where T : class;
+    byte[] GeneratePdf<T>(List<T> data, string title = "Report") where T: class;
 }

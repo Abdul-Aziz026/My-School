@@ -40,12 +40,14 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<ITeacherRepository, TeacherRepository>();
         services.AddSingleton<IEnrollmentRepository, EnrollmentRepository>();
         services.AddSingleton<IPaymentRepository, PaymentRepository>();
+        services.AddSingleton<IAttendanceRepository, AttendanceRepository>();
 
         // register JWT token service
         services.AddSingleton<IJwtTokenService, JwtTokenService>();
 
         // Email Services...
         services.AddScoped<IEmailService, BrevoEmailService>();
+        services.AddScoped<IDocumentService, DocumentService>();
 
         // Message Bus for sending commands/events through(MediatR & RabbitMQ)
         services.AddScoped<IMessageBus, MessageBus>();

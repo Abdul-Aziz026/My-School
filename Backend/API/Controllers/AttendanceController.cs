@@ -48,6 +48,7 @@ public class AttendanceController : Controller
     /// <summery>
     /// Delete attendance record by ID
     /// </summery>
+    [HttpDelete("{attendanceId}")]
     public async Task<IActionResult> DeleteAttendanceRecord(string attendanceId)
     {
         // Implementation for deleting attendance record
@@ -59,7 +60,8 @@ public class AttendanceController : Controller
     /// <summary>
     /// Update attendance record
     /// </summary>
-    public async Task<IActionResult> UpdateAttendanceRecord([FromBody] UpdateAttendanceDto dto)
+    [HttpPut("update/{attendanceId}")]
+    public async Task<IActionResult> UpdateAttendanceRecord([FromRoute] string attendanceId, [FromBody] UpdateAttendanceDto dto)
     {
         if (!ModelState.IsValid)
         {

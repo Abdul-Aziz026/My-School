@@ -36,12 +36,12 @@ public class ExportAttendanceDataQueryHandler : IRequestHandler<ExportAttendance
         throw new InvalidOperationException("Invalid export format");throw new InvalidOperationException("Invalid export format");
     }
 
-    private async Task<AttendanceFileResultDto> GeneratePdfFileAsync(Task<List<Attendance>?> attendanceResponse, ExportAttendanceDataQuery query)
+    private async Task<AttendanceFileResultDto> GenerateExcelFileAsync(Task<List<Attendance>?> attendanceResponse, ExportAttendanceDataQuery query)
     {
         throw new NotImplementedException();
     }
 
-    private async Task<AttendanceFileResultDto> GenerateExcelFileAsync(Task<List<Attendance>?> attendanceResponse, ExportAttendanceDataQuery query)
+    private async Task<AttendanceFileResultDto> GeneratePdfFileAsync(Task<List<Attendance>?> attendanceResponse, ExportAttendanceDataQuery query)
     {
         throw new NotImplementedException();
     }

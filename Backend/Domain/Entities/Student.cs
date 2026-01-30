@@ -16,7 +16,7 @@ public class Student : BaseEntity
     public bool IsDeleted { get; set; } = false;
     public bool IsActive { get; set; } = true;
 
-    public string GetId() => Id;
+    public string ParentId { get; set; } = string.Empty; // Id of the User entity
 }
 
 public enum StudentStatus

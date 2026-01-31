@@ -9,6 +9,7 @@ public static class ConfigurationSettingExtensions
         services.Configure<AuthLockoutSettings>(configuration.GetSection("Auth:Lockout"));
         services.Configure<BrevoSettings>(configuration.GetSection("BrevoEmail"));
         services.Configure<MongoSettings>(configuration.GetSection("MongoSettings"));
+        services.Configure<AbsentNotificationJobSettings>(configuration.GetSection("JobSettings"));
         return services;
     }
 }

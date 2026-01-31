@@ -1,13 +1,13 @@
 ﻿using Application.Common.Interfaces.Publisher;
 using Application.Features.Common.Models;
-using Application.Features.SchoolClassManagement.Commands.CreateClass;
-using Application.Features.SchoolClassManagement.Commands.CreateSubject;
-using Application.Features.SchoolClassManagement.Commands.DeleteSubject;
-using Application.Features.SchoolClassManagement.Commands.UpdateSubject;
-using Application.Features.SchoolClassManagement.DTOs;
+using Application.Features.SchoolClassManagement.ClassManagement.DTOs;
 using Application.Features.SchoolClassManagement.Queries.GetSubjectById;
 using Application.Features.SchoolClassManagement.Queries.GetSubjectClasses;
 using Application.Features.SchoolClassManagement.Queries.GetSubjects;
+using Application.Features.SchoolClassManagement.SubjectManagement.Commands.CreateSubject;
+using Application.Features.SchoolClassManagement.SubjectManagement.Commands.DeleteSubject;
+using Application.Features.SchoolClassManagement.SubjectManagement.Commands.UpdateSubject;
+using Application.Features.SchoolClassManagement.SubjectManagement.DTOs;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers;

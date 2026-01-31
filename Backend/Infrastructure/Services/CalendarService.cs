@@ -7,7 +7,7 @@ public class CalendarService : ICalendarService
 {
     public async Task<bool> ValidSchoolDay(DateTime date)
     {
-        if (date.DayOfWeek == DayOfWeek.Saturday || date.DayOfWeek == DayOfWeek.Sunday)
+        if (date.DayOfWeek == DayOfWeek.Friday || date.DayOfWeek == DayOfWeek.Saturday)
         {
             return false;
         }

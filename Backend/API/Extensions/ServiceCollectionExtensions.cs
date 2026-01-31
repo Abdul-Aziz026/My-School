@@ -41,6 +41,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IEnrollmentRepository, EnrollmentRepository>();
         services.AddSingleton<IPaymentRepository, PaymentRepository>();
         services.AddSingleton<IAttendanceRepository, AttendanceRepository>();
+        services.AddSingleton<ITimeTableRepository, TimeTableRepository>();
 
         // register JWT token service
         services.AddSingleton<IJwtTokenService, JwtTokenService>();
@@ -48,6 +49,7 @@ public static class ServiceCollectionExtensions
         // Email Services...
         services.AddScoped<IEmailService, BrevoEmailService>();
         services.AddScoped<IDocumentService, DocumentService>();
+        services.AddScoped<ICalendarService, CalendarService>();
 
         // Message Bus for sending commands/events through(MediatR & RabbitMQ)
         services.AddScoped<IMessageBus, MessageBus>();

@@ -1,7 +1,10 @@
 using API.Extensions;
 using API.MiddleWare;
+using Application.Settings;
 using Infrastructure.Extensions;
 using Infrastructure.Helper;
+using Infrastructure.Jobs;
+using Quartz;
 using Scalar.AspNetCore;
 using Serilog;
 
@@ -29,6 +32,27 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddJwtAuthentication();
 builder.Services.AddApplicationServices();
+
+// Register the background service
+builder.Services.AddHostedService<HeartbitTestJob>();
+
+// Configure Quartz.NET
+builder.Services.AddQuartz(q =>
+{
+    // Define the job
+    var jobKey = new JobKey("AbsentStudentNotificationJob");
+    q.AddJob<AbsentStudentNotificationJob>(opts => opts.WithIdentity(jobKey));
+
+    var jobRubTime = builder.Configuration["JobSettings:ScheduleTime"] ?? "10:00:00";
+
+    // Create a trigger for the job to run daily at 6 AM
+    q.AddTrigger(opts => opts
+        .ForJob(jobKey)
+        .WithIdentity("AbsentStudentNotificationJob-trigger")
+        .WithCronSchedule(AbsentNotificationJobSettings.GetCronExpression(jobRubTime))); // every day at 6:00 AM
+});
+
+builder.Services.AddQuartzHostedService(q => q.WaitForJobsToComplete = true);
 
 var app = builder.Build();
 

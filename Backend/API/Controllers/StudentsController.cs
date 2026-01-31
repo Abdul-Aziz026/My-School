@@ -1,14 +1,15 @@
 ﻿using Application.Common.Interfaces.Publisher;
 using Application.Features.Common.Models;
-using Application.Features.SchoolClassManagement.Commands.CreateStudent;
-using Application.Features.SchoolClassManagement.Commands.DeleteStudent;
-using Application.Features.SchoolClassManagement.Commands.EnrollStudent;
-using Application.Features.SchoolClassManagement.Commands.UnenrollStudent;
-using Application.Features.SchoolClassManagement.Commands.UpdateStudent;
-using Application.Features.SchoolClassManagement.DTOs;
-using Application.Features.SchoolClassManagement.Queries.GetStudentById;
-using Application.Features.SchoolClassManagement.Queries.GetStudentClasses;
-using Application.Features.SchoolClassManagement.Queries.GetStudents;
+using Application.Features.SchoolClassManagement.ClassManagement.DTOs;
+using Application.Features.SchoolClassManagement.StudentManagement.Commands.CreateStudent;
+using Application.Features.SchoolClassManagement.StudentManagement.Commands.DeleteStudent;
+using Application.Features.SchoolClassManagement.StudentManagement.Commands.EnrollStudent;
+using Application.Features.SchoolClassManagement.StudentManagement.Commands.UnenrollStudent;
+using Application.Features.SchoolClassManagement.StudentManagement.Commands.UpdateStudent;
+using Application.Features.SchoolClassManagement.StudentManagement.DTOs;
+using Application.Features.SchoolClassManagement.StudentManagement.Queries.GetStudentById;
+using Application.Features.SchoolClassManagement.StudentManagement.Queries.GetStudentClasses;
+using Application.Features.SchoolClassManagement.StudentManagement.Queries.GetStudents;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers;

@@ -1,16 +1,19 @@
 using Application.Common.Interfaces.Publisher;
-using Application.Features.SchoolClassManagement.Commands.CreateTeacher;
-using Application.Features.SchoolClassManagement.Commands.UpdateTeacher;
-using Application.Features.SchoolClassManagement.Commands.DeleteTeacher;
-using Application.Features.SchoolClassManagement.Commands.AssignTeacherToClass;
-using Application.Features.SchoolClassManagement.Commands.UnassignTeacherFromClass;
 using Application.Features.SchoolClassManagement.DTOs;
 using Application.Features.SchoolClassManagement.Queries.GetTeachers;
-using Application.Features.SchoolClassManagement.Queries.GetTeacherById;
 using Application.Features.SchoolClassManagement.Queries.GetTeacherClasses;
-using Application.Features.SchoolClassManagement.Queries.GetTeacherSubjects;
 using Microsoft.AspNetCore.Mvc;
 using Application.Features.Common.Models;
+using Application.Features.SchoolClassManagement.TeacherManagement.Commands.AssignTeacherToClass;
+using Application.Features.SchoolClassManagement.TeacherManagement.Commands.CreateTeacher;
+using Application.Features.SchoolClassManagement.TeacherManagement.Commands.DeleteTeacher;
+using Application.Features.SchoolClassManagement.TeacherManagement.Commands.UnassignTeacherFromClass;
+using Application.Features.SchoolClassManagement.TeacherManagement.Commands.UpdateTeacher;
+using Application.Features.SchoolClassManagement.TeacherManagement.Queries.GetTeacherById;
+using Application.Features.SchoolClassManagement.TeacherManagement.Queries.GetTeacherSubjects;
+using Application.Features.SchoolClassManagement.TeacherManagement.DTOs;
+using Application.Features.SchoolClassManagement.ClassManagement.DTOs;
+using Application.Features.SchoolClassManagement.SubjectManagement.DTOs;
 
 namespace API.Controllers;
 

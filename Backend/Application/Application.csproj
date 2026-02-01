@@ -17,6 +17,9 @@
 
   <ItemGroup>
     <Folder Include="Features\Auth\Mappings\" />
+    <Folder Include="Features\SchoolClassManagement\ExamManagement\Queries\" />
+    <Folder Include="Features\SchoolClassManagement\QuestionManagement\Commands\" />
+    <Folder Include="Features\SchoolClassManagement\QuestionManagement\Queries\" />
     <Folder Include="Validators\" />
   </ItemGroup>
 

@@ -10,17 +10,18 @@ using Application.Features.SchoolClassManagement.StudentManagement.DTOs;
 using Application.Features.SchoolClassManagement.StudentManagement.Queries.GetStudentById;
 using Application.Features.SchoolClassManagement.StudentManagement.Queries.GetStudentClasses;
 using Application.Features.SchoolClassManagement.StudentManagement.Queries.GetStudents;
+using Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class StudentsController : Controller
+public class StudentController : Controller
 {
 
     private readonly IMessageBus _messageBus;
-    public StudentsController(IMessageBus messageBus)
+    public StudentController(IMessageBus messageBus)
     {
         _messageBus = messageBus;
     }
@@ -173,5 +174,27 @@ public class StudentsController : Controller
         var query = new GetStudentClassesQuery(studentId);
         var result = await _messageBus.SendAsync<GetStudentClassesQuery, List<ClassResponseDto>>(query);
         return Ok(result);
+    }
+
+    [HttpPost("submit")]
+    public async Task<IActionResult> SubmitExam(StudentAnswer studentAnswer)
+    {
+        //var result = await _studentService.SubmitExam(studentAnswer);
+        return Ok(/*result*/);
+    }
+
+    [HttpGet("result/{examId}/{studentId}")]
+    public async Task<IActionResult> GetResult(string examId, string studentId)
+    {
+        //var result = await _studentService.GetStudentResult(examId, studentId);
+        //return result == null ? NotFound() : Ok(result);
+        return Ok();
+    }
+
+    [HttpGet("results/{examId}")]
+    public async Task<IActionResult> GetExamResults(string examId)
+    {
+        //var results = await _studentService.GetExamResults(examId);
+        return Ok(/*results*/);
     }
 }

@@ -4,11 +4,14 @@ using Application.Features.SchoolClassManagement.ClassManagement.DTOs;
 using Application.Features.SchoolClassManagement.StudentManagement.Commands.CreateStudent;
 using Application.Features.SchoolClassManagement.StudentManagement.Commands.DeleteStudent;
 using Application.Features.SchoolClassManagement.StudentManagement.Commands.EnrollStudent;
+using Application.Features.SchoolClassManagement.StudentManagement.Commands.SubmitExam;
 using Application.Features.SchoolClassManagement.StudentManagement.Commands.UnenrollStudent;
 using Application.Features.SchoolClassManagement.StudentManagement.Commands.UpdateStudent;
 using Application.Features.SchoolClassManagement.StudentManagement.DTOs;
+using Application.Features.SchoolClassManagement.StudentManagement.Queries.GetExamResults;
 using Application.Features.SchoolClassManagement.StudentManagement.Queries.GetStudentById;
 using Application.Features.SchoolClassManagement.StudentManagement.Queries.GetStudentClasses;
+using Application.Features.SchoolClassManagement.StudentManagement.Queries.GetStudentResult;
 using Application.Features.SchoolClassManagement.StudentManagement.Queries.GetStudents;
 using Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
@@ -177,24 +180,33 @@ public class StudentController : Controller
     }
 
     [HttpPost("submit")]
-    public async Task<IActionResult> SubmitExam(StudentAnswer studentAnswer)
+    public async Task<IActionResult> SubmitExam(SubmitExamDto studentAnswer)
     {
-        //var result = await _studentService.SubmitExam(studentAnswer);
-        return Ok(/*result*/);
+        var command = studentAnswer.ToSubmitExamCommand();
+        var result = await _messageBus.SendAsync<SubmitExamCommand, ExamResultDto>(command);
+        return Ok(result);
     }
 
     [HttpGet("result/{examId}/{studentId}")]
     public async Task<IActionResult> GetResult(string examId, string studentId)
     {
-        //var result = await _studentService.GetStudentResult(examId, studentId);
-        //return result == null ? NotFound() : Ok(result);
-        return Ok();
+        var query = new GetStudentResultQuery
+        {
+            ExamId = examId,
+            StudentId = studentId
+        };
+        var result = await _messageBus.SendAsync<GetStudentResultQuery, ExamResultDto>(query);
+        return Ok(result);
     }
 
     [HttpGet("results/{examId}")]
     public async Task<IActionResult> GetExamResults(string examId)
     {
-        //var results = await _studentService.GetExamResults(examId);
-        return Ok(/*results*/);
+        var query = new GetExamResultsQuery
+        {
+            ExamId = examId
+        };
+        var results = await _messageBus.SendAsync<GetExamResultsQuery, List<ExamResultDto>>(query);
+        return Ok(results);
     }
 }

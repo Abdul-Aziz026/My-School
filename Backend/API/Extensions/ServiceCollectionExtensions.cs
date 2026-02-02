@@ -42,6 +42,8 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IPaymentRepository, PaymentRepository>();
         services.AddSingleton<IAttendanceRepository, AttendanceRepository>();
         services.AddSingleton<ITimeTableRepository, TimeTableRepository>();
+        services.AddSingleton<IExamRepository, ExamRepository>();
+        services.AddSingleton<IQuestionRepository, QuestionRepository>();
 
         // register JWT token service
         services.AddSingleton<IJwtTokenService, JwtTokenService>();

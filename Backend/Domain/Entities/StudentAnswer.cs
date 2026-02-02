@@ -4,7 +4,7 @@ public class StudentAnswer : BaseEntity
 {
     public string ExamId { get; set; } = string.Empty;
     public string StudentId { get; set; } = string.Empty;
-    public List<Answer> Answers { get; set; } = new();
+    public Dictionary<string, string> Answers { get; set; } = new();
     public int TotalMarksObtained { get; set; }
     public DateTime SubmittedAt { get; set; }
     public bool IsGraded { get;set; }

@@ -15,6 +15,8 @@ public class Student : BaseEntity
     public StudentStatus Status { get; set; }
     public bool IsDeleted { get; set; } = false;
     public bool IsActive { get; set; } = true;
+    public string AcademicYear { get; set; } = string.Empty;
+
 
     public string ParentId { get; set; } = string.Empty; // Id of the User entity
 }

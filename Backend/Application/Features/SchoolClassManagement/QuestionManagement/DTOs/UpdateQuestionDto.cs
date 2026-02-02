@@ -1,9 +1,11 @@
-﻿using Application.Features.SchoolClassManagement.QuestionManagement.Commands.CreateQuestion;
+﻿
+using Application.Features.SchoolClassManagement.QuestionManagement.Commands.UpdateQuestion;
 
 namespace Application.Features.SchoolClassManagement.QuestionManagement.DTOs;
 
-public class CreateQuestionDto
+public class UpdateQuestionDto
 {
+    public string Id { get; set; } = string.Empty;  // Required to identify which question to update
     public string QuestionText { get; set; } = string.Empty;
     public string QuestionType { get; set; } = string.Empty;
     public List<string> Options { get; set; } = new();
@@ -12,18 +14,18 @@ public class CreateQuestionDto
     public decimal Marks { get; set; }
     public string SubjectName { get; set; } = string.Empty;
 
-    public CreateQuestionCommand ToCreateQuestionCommand()
+    public UpdateQuestionCommand ToUpdateQuestionCommand()
     {
-        return new CreateQuestionCommand
+        return new UpdateQuestionCommand
         {
+            Id = this.Id,
             QuestionText = this.QuestionText,
             QuestionType = this.QuestionType,
             Options = this.Options,
             CorrectAnswer = this.CorrectAnswer,
             CorrectAnswerText = this.CorrectAnswerText,
             Marks = this.Marks,
-            SubjectName = this.SubjectName,
-            CreatedAt = DateTime.UtcNow
+            SubjectName = this.SubjectName
         };
     }
 }

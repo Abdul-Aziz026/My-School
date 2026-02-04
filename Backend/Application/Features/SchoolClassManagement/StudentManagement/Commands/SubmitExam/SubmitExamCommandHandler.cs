@@ -2,8 +2,10 @@
 using Application.Common.Exceptions;
 using Application.Common.Interfaces.Repositories;
 using Application.Features.SchoolClassManagement.StudentManagement.DTOs;
+using Domain;
 using Domain.Entities;
 using MediatR;
+using System.Linq.Expressions;
 
 namespace Application.Features.SchoolClassManagement.StudentManagement.Commands.SubmitExam;
 
@@ -28,66 +30,47 @@ public class SubmitExamCommandHandler : IRequestHandler<SubmitExamCommand, ExamR
         {
             throw new InvalidOperationException("Exam is not published yet. Students cannot submit.");
         }
-        var studentAnswer = new StudentAnswer
+        var studentAnswers = new StudentAnswer
         {
             ExamId = request.ExamId,
             StudentId = request.StudentId,
             Answers = request.Answers,
         };
-        await _studentRepository.AddAsync(studentAnswer);
+        await _studentRepository.AddAsync(studentAnswers);
         // fetch exam paper and question
-        /*
-         * // 4. Fetch exam paper and questions for evaluation
-        var paper = await _examPaperRepository
-            .GetByExamIdAsync(dto.ExamId, cancellationToken)
-            ?? throw new InvalidOperationException("No exam paper found for this exam.");
+        var examPaper = await _examRepository.GetByIdAsync<ExamPaper>(request.ExamId);
+        if (examPaper == null)
+        {
+            throw new NotFoundException("Exam not found");
+        }
+        Expression<Func<Question, bool>> filter = x => examPaper.QuestionIds.Contains(x.Id);
+        var questions = await _examRepository.GetItemsByConditionAsync<Question>(filter);
 
-        var questions = await _questionRepository
-            .GetByIdsAsync(paper.QuestionIds, cancellationToken);
-
-        // 5. Calculate score
+        // calculate score
         decimal obtainedMarks = 0;
-
         foreach (var question in questions)
         {
-            if (dto.Answers.TryGetValue(question.Id, out var studentAns)
-                && studentAns.Equals(question.CorrectAnswer, StringComparison.OrdinalIgnoreCase))
+            if (question.QuestionType == "mcq" && request.Answers.TryGetValue(question.Id, out var studentAnswer))
             {
-                obtainedMarks += question.Marks;
+                if (question.CorrectAnswer.Equals(studentAnswer))
+                {
+                    obtainedMarks += question.Marks; 
+                }
             }
         }
-
-        decimal percentage = exam.TotalMarks > 0
-            ? Math.Round((obtainedMarks / exam.TotalMarks) * 100, 2)
-            : 0;
-
-        // 6. Persist result
+        decimal markPercentage = exam.TotalMarks > 0 ?
+                Math.Round((obtainedMarks / exam.TotalMarks) * 100, 2) : 0;
         var result = new ExamResult
         {
-            ExamId         = dto.ExamId,
-            StudentId      = dto.StudentId,
-            TotalMarks     = exam.TotalMarks,
-            ObtainedMarks  = obtainedMarks,
-            Percentage     = percentage,
-            IsPassed       = obtainedMarks >= exam.PassingMarks
+            ExamId = request.ExamId,
+            StudentId = request.StudentId,
+            TotalMarks = exam.TotalMarks,
+            ObtainedMarks = obtainedMarks,
+            Percentage = markPercentage,
+            IsPassed = obtainedMarks >= exam.PassingMarks,
+            EvaluatedAt = DateTime.UtcNow
         };
-
-        await _examResultRepository.AddAsync(result, cancellationToken);
-
-        // 7. Return result immediately
-        return new ExamResultDto
-        {
-            Id             = result.Id,
-            ExamId         = result.ExamId,
-            StudentId      = result.StudentId,
-            TotalMarks     = result.TotalMarks,
-            ObtainedMarks  = result.ObtainedMarks,
-            Percentage     = result.Percentage,
-            IsPassed       = result.IsPassed,
-            EvaluatedAt    = result.EvaluatedAt
-        };
-    }
-         */
-        throw new NotImplementedException();
+        await _examRepository.AddAsync(result);
+        return result.ToExamResultDto();
     }
 }

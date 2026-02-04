@@ -1,4 +1,6 @@
-﻿namespace Application.Features.SchoolClassManagement.StudentManagement.DTOs;
+﻿using Domain.Entities;
+
+namespace Application.Features.SchoolClassManagement.StudentManagement.DTOs;
 
 public class ExamResultDto
 {
@@ -9,4 +11,21 @@ public class ExamResultDto
     public decimal Percentage { get; set; }
     public bool IsPassed { get; set; }
     public DateTime EvaluatedAt { get; set; }
+}
+
+public static class ExamResultDtoExtensions
+{
+    public static ExamResultDto ToExamResultDto(this ExamResult examResult)
+    {
+        return new ExamResultDto
+        {
+            ExamId = examResult.ExamId,
+            StudentId = examResult.StudentId,
+            TotalMarks = examResult.TotalMarks,
+            ObtainedMarks = examResult.ObtainedMarks,
+            Percentage = examResult.Percentage,
+            IsPassed = examResult.IsPassed,
+            EvaluatedAt = examResult.EvaluatedAt,
+        };
+    }
 }
